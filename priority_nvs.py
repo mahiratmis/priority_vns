@@ -743,7 +743,7 @@ for case in json_case[0]:
 
             ####################RECORDING RESULTS##################
             ###GA Outputs
-            VNS_SimOpt["VNS_best_cost"]=best_cost[0]
+            VNS_SimOpt["VNS_best_cost"]=best_cost
             VNS_SimOpt["VNS_best_priority"]=best_priority
             VNS_SimOpt["VNS_run_time"]=run_time
                     
