@@ -463,7 +463,7 @@ def solve_rvns( cache, initial_priority, nsf, min_cluster, max_cluster, failure_
             # create neighborhood solution using kth ngf
             x1 = nsf[k](x, min_cluster, max_cluster)
             tcost_x1 = prune_and_evaluate(x1, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-            if tcost_x1 < tcost_x:
+            if tcost_x1 <= tcost_x:
                 #logging.debug(f"{case_id} === NEW lower total cost: {tcost_x1:.4f} epoch{epoch} ===")
                 print("=== NEW lower total cost: {:.4f}".format(tcost_x1))
                 x = x1
