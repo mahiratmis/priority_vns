@@ -454,7 +454,9 @@ def solve_rvns( cache, initial_priority, nsf, min_cluster, max_cluster, failure_
     #pbar = tqdm.tqdm(total = 200, desc=f"{case_id}")
     iter_since_last_best = 0
     epoch=0
-    while(iter_since_last_best < 300 ):
+    same_consecutive_count = 0
+    prev_best = 0
+    while(iter_since_last_best < 100 and same_consecutive_count < 5 ):
         k = 0
         epoch += 1
         better_found = False
@@ -470,6 +472,11 @@ def solve_rvns( cache, initial_priority, nsf, min_cluster, max_cluster, failure_
                 tcost_x = tcost_x1
                 k = 0
                 better_found = True
+                if prev_best == tcost_x1 :
+                    same_consecutive_count += 1
+                else:
+                    same_consecutive_count = 0
+                    prev_best = tcost_x1
             else:
                 k += 1                
         
