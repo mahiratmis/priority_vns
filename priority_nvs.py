@@ -1,5 +1,3 @@
-# To add a new markdown cell, type '# %% [markdown]'
-
 #Capacity Optimizer ADDED
 #LOCAL SEARCH ADDED
 #INITAL POPULATION GENERATOR ADDED
@@ -7,28 +5,13 @@
 #PRUNE and DATABASE added to GA
 #Database size set to 10000 over this limit not recorded to cache
 
-
-####Running condations########
-#100 pop size 50 gen size
-#100000 simulation length 5000 warmup period
-#10 replications
-#0.8 crossover prob -0.4 mutation prob. 
-#equal probability to choose any crossover and mutation type
-#tournoment size 10
-
-
 import numpy as np
 import math
 import sys
 import json
 import pandas as pd
 import time
-#from bokeh.charts import BoxPlot, output_notebook, show
-#import seaborn as sns
-#import pulp
-#from pulp import *
 import time
-#from gurobipy import *
 import random
 import matplotlib.pyplot as plt
 
@@ -40,8 +23,9 @@ from deap import tools
 import itertools
 
 import simulation_codes  #Andre's package that used in simulation opt.
-#import scipy.stats as st
 
+random.seed(60)
+np.random.seed(60)
 
 ###Prune function has to defined earlier 
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
@@ -130,28 +114,15 @@ def prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_co
     
     priority_rep=encode(priority)
     
-    #print priority_rep
-    
     if priority_rep in cache.keys():
-        
-        #print "in cache"
-        
         return cache[priority_rep]
     
-    else:
-        
-        #may need to check cache length
-        #print "update cache"
-        
-        _, TotalCost, _, _=optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-        
-        
-        if len(cache)<10000: #len of cache
-        
-            cache[priority_rep]=TotalCost
-        
-        
-        return TotalCost
+    #may need to check cache length
+    _, TotalCost, _, _= optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    
+    if len(cache)<10000: #len of cache
+        cache[priority_rep]=TotalCost
+    return TotalCost
 
 
 ###Fitness Evaulation function
@@ -195,7 +166,6 @@ def Fitness(cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skil
 #DONT FORGET COME AT THE END!!!
         
 
-
 def generatePriority(numSKUs, numPriorityClass=1):
     '''
     -assing priority classes to each SKU randomly for a given number of priority class
@@ -234,8 +204,6 @@ def swicthGen(numPriorityClass,  n, priority):
         priority_new[idx2] = random.choice(numbers)
 
     return creator.Individual(priority_new)
-    
-
 
 def shuffleGen(priority):
     priority_new = priority[:]
@@ -267,15 +235,8 @@ def chooseMutation(numPriorityClass, priority):
     return swicthGen(numPriorityClass,  2, priority)
 
 
-#########Generating different populations###########
-#1-FCFS->
-#2-Shortest and longest proccessing->
-#3-min and max holding cost->
-#4-hxmu long lowest and highest->
-#5-2 priority class versions of all above 
 
-
-
+# VNS Neighborhood Structures
 def ns_throas_mutation(x, *args):
     """ Randomly select three element positions(i,j,k) of x. 
          value at i becomes value at j 
@@ -288,6 +249,7 @@ def ns_throas_mutation(x, *args):
     x_new[idx3] = x[idx2]
     x_new[idx1] = x[idx3]   
     return x_new  
+
 
 def ns_center_inverse_mutation(x, *args):
     """ Randomly select a position i, mirror genes referencing i 
@@ -343,7 +305,12 @@ def ns_mutate_random2(x, min_cluster, max_cluster):
 
 def population_generator(failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
     '''
-    
+    #########Generating different populations###########
+    #1-FCFS->
+    #2-Shortest and longest proccessing->
+    #3-min and max holding cost->
+    #4-hxmu long lowest and highest->
+    #5-2 priority class versions of all above
     '''
     population=[]
     
@@ -443,31 +410,24 @@ def population_generator(failure_rates, service_rates, holding_costs, penalty_co
     return [list(x) for x in population]
 
 
-def solve_rvns( cache, initial_priority, nsf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, max_iters=1000):
+def solve_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, max_iters=1000):
     """Finds best solution x given an initial solution x,
-       list shaking functions nsf, and
-       list of neighbor list generation functions  nlgf. """
-    #logging.basicConfig(filename=f'app_rvns{fname_possix}.log', level=logging.DEBUG, format=f'%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+       list shaking functions ngf, and
+    """
     x = initial_priority 
     tcost_x = prune_and_evaluate(x, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-    #total_search_time=0.
-    #pbar = tqdm.tqdm(total = 200, desc=f"{case_id}")
     iter_since_last_best = 0
-    epoch=0
     same_consecutive_count = 0
     prev_best = 0
-    while(iter_since_last_best < 100 and same_consecutive_count < 5 ):
+    while(iter_since_last_best < 100 and same_consecutive_count < 10 ):
         k = 0
-        epoch += 1
         better_found = False
-        #start_time = time.time()
         while k < len(nsf):
             # create neighborhood solution using kth ngf
-            x1 = nsf[k](x, min_cluster, max_cluster)
+            x1 = ngf[k](x, min_cluster, max_cluster)
             tcost_x1 = prune_and_evaluate(x1, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
             if tcost_x1 <= tcost_x:
-                #logging.debug(f"{case_id} === NEW lower total cost: {tcost_x1:.4f} epoch{epoch} ===")
-                print("=== NEW lower total cost: {:.4f}".format(tcost_x1))
+                print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(tcost_x1, iter_since_last_best))
                 x = x1
                 tcost_x = tcost_x1
                 k = 0
@@ -483,16 +443,8 @@ def solve_rvns( cache, initial_priority, nsf, min_cluster, max_cluster, failure_
         # check for improvement
         if not better_found:
             iter_since_last_best += 1
-            #pbar.update(1)
         else:
             iter_since_last_best = 0
-            #pbar.close()
-            #pbar = tqdm.tqdm(total = 250, desc=f"{case_id}")
-
-        #stop_time = time.time() - start_time
-        #total_search_time += stop_time
-        #logging.debug(f"{case_id} epoch{epoch} time:{stop_time:.4f} total search time:{total_search_time:.4f} min_cost:{tcost_x}")  
-    #pbar.close()
     return tcost_x, x, cache
 
 
@@ -587,15 +539,6 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
     best_ind = tools.selBest(pop, 1)[0]
     
     return best_cost,best_priority, stop_time, cache
-
-#returns cache now
-
-#if __name__ == "__main__":
-#    main()
-
-
-
-
 
 
 
@@ -707,11 +650,15 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
         json_case.append(json.loads(line))
         
 # shaking functions
+indices = [0,1,2,3,4,5]
+fname = "".join(map(str,indices))
 nsf = [ns_mutate_random, ns_mutate_random2, ns_shuffle, ns_two_way_swap, ns_throas_mutation, ns_center_inverse_mutation]
+nsf = [nsf[i] for i in indices]
 
 #################INTEGRATING pruning and cache TO GA#####################################
 
 Results=[]
+tot_cases = 0
 for case in json_case[0]:
     if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
         if case['simulationGAresults']['skill_cost_factor']==0.1:
@@ -727,38 +674,20 @@ for case in json_case[0]:
             numPriorityClass=len(FailureRates) #making equal to number of SKUs
                     
             ##############GA RUN############
-            print "running VNS"
-            print case["caseID"]
+            print "running VNS for case ", case["caseID"]
             cache={}
             best_cost, best_priority, run_time, cache  =VNS_Priority(cache, FailureRates, ServiceRates,holding_costs, penalty_cost,skillCost, machineCost, numPriorityClass) 
                     
-            print best_cost, best_priority
+            print "Best Cost", best_cost
+            print "Best Priority", best_priority
                     
-            print "VNS is over"
                     
-            print "=============="
-                    
-            start_time = time.time() #start time
-    
-            list_priority=[best_priority] #selection procedure is needed here !!!
-                    
-            global_best_cost, global_best_priority, best_priority_list=local_search(list_priority,  cache, best_cost, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, machineCost)
-        
-            end_time=time.time()-start_time
-            
-            print global_best_cost, global_best_priority, best_priority_list
-
             ####################RECORDING RESULTS##################
-            ###GA Outputs
+            ###VNS Outputs
             VNS_SimOpt["VNS_best_cost"]=best_cost
             VNS_SimOpt["VNS_best_priority"]=best_priority
             VNS_SimOpt["VNS_run_time"]=run_time
                     
-            ###Local Search Outputs
-            VNS_SimOpt["global_best_cost"]=global_best_cost
-            VNS_SimOpt["global_best_priority"]=global_best_priority
-            VNS_SimOpt["best_priority_list"]=best_priority_list
-            VNS_SimOpt["global_run_time"]=run_time+end_time
                     
             ###inputs
             VNS_SimOpt["CaseID"]=case["caseID"]
@@ -773,9 +702,10 @@ for case in json_case[0]:
             VNS_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
             #####
         
-            Results.append(VNS_SimOpt)
-                   
-            print "run completed"
+            Results.append(VNS_SimOpt)        
+            tot_cases +=1 
+            if tot_cases == 3:
+                break           
                 
                 
 #analysis number of priority classes
@@ -785,26 +715,5 @@ for case in json_case[0]:
 #comparision with benchmark
 #comparison with regular GA
 
-with open('Improved_VNS_Priority_32_instance.json', 'w') as outfile:
+with open(fname+'_Improved_VNS_Priority_32_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
-
-
-json_case2=[]
-with open("Improved_GA_Priority_32_instance.json", "r") as json_file2:
-    #json_file.readline()
-    for line in json_file2:
-        json_case2.append(json.loads(line))
-        
-
-
-df=pd.DataFrame.from_dict(json_case2[0])
-
-
-df.keys()
-
-
-df['global_best_cost']=df['global_best_cost'].map(lambda x:  x[0] if type(x)==list else x)
-
-
-df[["CaseID","GA_best_cost", "global_best_cost"]]
-
