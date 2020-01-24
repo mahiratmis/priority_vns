@@ -63,7 +63,7 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
         temp_Server_Cost=min_nserver*machineCost
 
         #########RISK AVERSE #################
-        temp_holding_backorder_CostList=np.mean(temp_holding_backorder_CostList)
+        temp_holding_backorder_CostList=np.array(temp_holding_backorder_CostList)
         temp_var = np.percentile(temp_holding_backorder_CostList, 100 - var_level) #95%
         temp_cvar_plus = temp_holding_backorder_CostList[temp_holding_backorder_CostList > temp_var].mean() 
         temp_cdf_var = temp_holding_backorder_CostList[temp_holding_backorder_CostList <= temp_var].size / (1.0*temp_holding_backorder_CostList.size)
