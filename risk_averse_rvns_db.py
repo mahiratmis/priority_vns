@@ -352,53 +352,54 @@ tot_cases = 0
 for case in json_case[0]:
     if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
         if case['simulationGAresults']['skill_cost_factor']==0.1:
+            if case['simulationGAresults']['utilization_rate'] ==0.8:
                     
-            FailureRates=np.array(case['simulationGAresults']["failure_rates"])
-            ServiceRates=np.array(case['simulationGAresults']["service_rates"])
-            holding_costs=np.array(case['simulationGAresults']["holding_costs"])
-            penalty_cost=case['simulationGAresults']["penalty_cost"]
-            skillCost=100 #NOT USING THIS ATM
-            machineCost=case['simulationGAresults']['machine_cost']
-                    
-            VNS_SimOpt={}
-            numPriorityClass=len(FailureRates) #making equal to number of SKUs
-                    
-            ##############VNS RUN############
-            print "running VNS for ", case["caseID"]
-            cache={}
-            best_cost, best_priority, run_time, cache  =VNS_Priority(cache, FailureRates, ServiceRates,holding_costs, penalty_cost,skillCost, machineCost, numPriorityClass) 
-                    
-            print "Best Cost", best_cost
-            print "Best Priority", best_priority
-                    
-                    
-            ####################RECORDING RESULTS##################
-            ###VNS Outputs
-            VNS_SimOpt["VNS_best_cost"]=best_cost
-            VNS_SimOpt["VNS_best_priority"]=best_priority
-            VNS_SimOpt["VNS_run_time"]=run_time
-                    
-                    
-            ###inputs
-            VNS_SimOpt["CaseID"]=case["caseID"]
-            VNS_SimOpt["FailureRates"]=FailureRates.tolist()
-            VNS_SimOpt["ServiceRates"]=ServiceRates.tolist()
-            VNS_SimOpt["holding_costs"]=holding_costs.tolist()
-            VNS_SimOpt["penalty_cost"]=penalty_cost  
-            VNS_SimOpt["skillCost"]=skillCost
-            VNS_SimOpt["machineCost"]=machineCost
-            VNS_SimOpt["num_SKU"]=len(FailureRates)
-            VNS_SimOpt["utilization_rate"]= case['simulationGAresults']['utilization_rate']
-            VNS_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
-            #####
+                FailureRates=np.array(case['simulationGAresults']["failure_rates"])
+                ServiceRates=np.array(case['simulationGAresults']["service_rates"])
+                holding_costs=np.array(case['simulationGAresults']["holding_costs"])
+                penalty_cost=case['simulationGAresults']["penalty_cost"]
+                skillCost=100 #NOT USING THIS ATM
+                machineCost=case['simulationGAresults']['machine_cost']
+                        
+                VNS_SimOpt={}
+                numPriorityClass=len(FailureRates) #making equal to number of SKUs
+                        
+                ##############VNS RUN############
+                print "running VNS for ", case["caseID"]
+                cache={}
+                best_cost, best_priority, run_time, cache  =VNS_Priority(cache, FailureRates, ServiceRates,holding_costs, penalty_cost,skillCost, machineCost, numPriorityClass) 
+                        
+                print "Best Cost", best_cost
+                print "Best Priority", best_priority
+                        
+                        
+                ####################RECORDING RESULTS##################
+                ###VNS Outputs
+                VNS_SimOpt["VNS_best_cost"]=best_cost
+                VNS_SimOpt["VNS_best_priority"]=best_priority
+                VNS_SimOpt["VNS_run_time"]=run_time
+                        
+                        
+                ###inputs
+                VNS_SimOpt["CaseID"]=case["caseID"]
+                VNS_SimOpt["FailureRates"]=FailureRates.tolist()
+                VNS_SimOpt["ServiceRates"]=ServiceRates.tolist()
+                VNS_SimOpt["holding_costs"]=holding_costs.tolist()
+                VNS_SimOpt["penalty_cost"]=penalty_cost  
+                VNS_SimOpt["skillCost"]=skillCost
+                VNS_SimOpt["machineCost"]=machineCost
+                VNS_SimOpt["num_SKU"]=len(FailureRates)
+                VNS_SimOpt["utilization_rate"]= case['simulationGAresults']['utilization_rate']
+                VNS_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
+                #####
 
-            ### risk averse parameter
-            VNS_SimOpt["var_level"]= var_level
-        
-            Results.append(VNS_SimOpt)        
-            tot_cases += 1 
-            if tot_cases == 3:
-                break           
+                ### risk averse parameter
+                VNS_SimOpt["var_level"]= var_level
+            
+                Results.append(VNS_SimOpt)        
+                tot_cases += 1 
+                if tot_cases == 3:
+                    break           
                 
 
 with open(fname+'_Improved_VNS_Priority_32_instance.json', 'w') as outfile:
