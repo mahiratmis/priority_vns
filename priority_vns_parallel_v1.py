@@ -1,9 +1,4 @@
-#Capacity Optimizer ADDED
-#LOCAL SEARCH ADDED
-#INITAL POPULATION GENERATOR ADDED
-#PRUNE AND DATABASE added to Local search
-#PRUNE and DATABASE added to GA
-#Database size set to 10000 over this limit not recorded to cache
+#PRUNE and DATABASE available
 
 import numpy as np
 import math
@@ -14,50 +9,40 @@ import time
 import time
 import random
 import matplotlib.pyplot as plt
-
-
+import itertools
 from deap import base
 from deap import creator
 from deap import tools
-
-import itertools
+import multiprocessing
 
 import simulation_codes  #Andre's package that used in simulation opt.
 
+# reproducability
 random.seed(60)
 np.random.seed(60)
 
 ###Prune function has to defined earlier 
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
-    
     '''
     returns number of servers and total cost for allocating
     that number of servers 
-    
     '''
-
     min_nserver=int(sum(np.array(FailureRates)/np.array(ServiceRates)))+1    #min required servers
-    
     assignment=np.ones((min_nserver, len(FailureRates)))
-    
-    
-    holding_backorder_CostList =                     simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,                                            holding_costs, penalty_cost, assignment,                                             priority,
+    holding_backorder_CostList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =10)
                     
     Server_Cost=min_nserver*machineCost
-    
     TotalCost=np.mean(holding_backorder_CostList)+Server_Cost
-    
         
     while True:
         #print min_nserver
         min_nserver+=1 
         #print min_nserver
         assignment=np.ones((min_nserver, len(FailureRates)))
-        
-        temp_holding_backorder_CostList =                     simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,                                            holding_costs, penalty_cost, assignment,                                             priority,
+        temp_holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =10)
@@ -68,12 +53,9 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
         if temp_TotalCost > TotalCost:
             min_nserver-=1
             break
-        
         else:
             TotalCost=temp_TotalCost
             Server_Cost= temp_Server_Cost
-        
-    
     return min_nserver, TotalCost, Server_Cost, TotalCost-Server_Cost
 
 
@@ -81,7 +63,6 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
 def set_multipliers(len_sku):
     #global multipliers
     multipliers = 2**np.arange(len_sku-1,-1,-1)
-    
     return multipliers
 
 
@@ -106,17 +87,13 @@ def encode(x):
     :param x, sample solution
     """
     multipliers=set_multipliers(len(x))
-    
     return tuple([sum([multipliers[j] for j,c2 in enumerate(x) if c2 == c]) for c in set(x)]) 
 
 
 def prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
-    
-    priority_rep=encode(priority)
-    
+    priority_rep = encode(priority)
     if priority_rep in cache.keys():
         return cache[priority_rep]
-    
     #may need to check cache length
     _, TotalCost, _, _= optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     
@@ -125,10 +102,26 @@ def prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_co
     return TotalCost
 
 
+def prune_and_evaluate_parallel(q, l, priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
+    
+    priority_rep=encode(priority)
+    l.acquire()
+    if priority_rep in cache.keys():
+        q.put((priority, cache[priority_rep]))
+        l.release()
+    else:
+        l.release()
+        _, TotalCost, _, _= optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+        l.acquire()
+        if len(cache)<10000: #len of cache
+            cache[priority_rep]=TotalCost
+            q.put((priority, TotalCost))
+        l.release()
+
+
 ###Fitness Evaulation function
 #### CaLls simulation 
 ###cache is the database 
-
 def Fitness(cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, machineCost,  priority):
     '''
     input: -Individual representing clustering scheme
@@ -148,22 +141,12 @@ def Fitness(cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skil
            (3) OptimzeStockLevels function is called by given queue length dist. and initial costs are calculated???
            (4) Local search is performed by increasing server numbers in each cluster by one and step (2) and (3) repeted
            (5) Step (4) is repated if there is a decrease in total cost
-     
     
     Warning !! type matching array vs list might be problem (be careful about type matching)
     
     '''
-    
-    #take cache as input and use 
-    
-    TotalCost=prune_and_evaluate(priority, cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost,  machineCost)
-    
-    print "After Prune Final number: ", TotalCost
+    TotalCost = prune_and_evaluate(priority, cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost,  machineCost)
     return TotalCost,  
-#we may add invenorty and other cost at the end  of optimization with one more run for optimized schedules 
-#priority, totalCostList, 
-#priority, totalCostList, 
-#DONT FORGET COME AT THE END!!!
         
 
 def generatePriority(numSKUs, numPriorityClass=1):
@@ -175,69 +158,8 @@ def generatePriority(numSKUs, numPriorityClass=1):
     return np.random.choice(np.arange(1, numPriorityClass+1), numSKUs)
 
 
-def swicthGen(numPriorityClass,  n, priority):
-    
-    #to keep orginal probabilty of switching to other cluster during iteration
-    
-    #when n=1 only one gen is switched 
-
-    priority_new = priority[:]
-
-    numSKUs = len(priority_new)
-
-    idx1, idx2 = random.sample(range(0, numSKUs), 2)
-
-    ex_priority_number = priority[idx1]
-
-    #excluding current priority class
-    
-    numbers = [x for x in range(1,numPriorityClass+1) if x != ex_priority_number]
-    
-    priority_new[idx1] = random.choice(numbers)
-
-    if n == 2:
-
-        ex_priority_number = priority[idx2]
-
-        numbers = [x for x in range(1,numPriorityClass+1) if x != ex_priority_number]
-
-        priority_new[idx2] = random.choice(numbers)
-
-    return creator.Individual(priority_new)
-
-def shuffleGen(priority):
-    priority_new = priority[:]
-    
-    random.shuffle(priority_new )
-    
-    return creator.Individual(priority_new) 
-
-def swapGen(priority):
-    
-    priority_new = priority[:]
-    numSKUs = len(priority_new)
-    idx1, idx2 = random.sample(range(0, numSKUs), 2)
-    priority_new[idx1] = priority[idx2]
-    priority_new[idx2] = priority[idx1]
-    return creator.Individual(priority_new)
-
-def chooseMutation(numPriorityClass, priority): 
-    r = random.uniform(0, 1)
-    if r <= 0.25: 
-        return shuffleGen(priority)
-    
-    if r <= 0.5:
-        return swapGen(priority)
-    
-    if r <= 0.75:
-        return swicthGen(numPriorityClass,  1, priority)
-
-    return swicthGen(numPriorityClass,  2, priority)
-
-
-
 # VNS Neighborhood Structures
-def ns_throas_mutation(x, *args):
+def ns_throas_mutation(q, x, *args):
     """ Randomly select three element positions(i,j,k) of x. 
          value at i becomes value at j 
          value at j becomes value at k
@@ -248,34 +170,34 @@ def ns_throas_mutation(x, *args):
     x_new[idx2] = x[idx1]
     x_new[idx3] = x[idx2]
     x_new[idx1] = x[idx3]   
-    return x_new  
+    q.put(x_new) 
 
 
-def ns_center_inverse_mutation(x, *args):
+def ns_center_inverse_mutation(q, x, *args):
     """ Randomly select a position i, mirror genes referencing i 
     Example: [1,2,3,4,5,6] if i is 3 result is [3,2,1,6,5,4]"""
     idx = random.randint(0, len(x)-1)
-    return  x[idx::-1] + x[:idx:-1]   
+    q.put(x[idx::-1] + x[:idx:-1])   
 
 
-def ns_two_way_swap(x, *args):
+def ns_two_way_swap(q, x, *args):
     """ Randomly swaps two elements of x. """
     x_new = x[:]
     n_skus = len(x_new)
     idx1, idx2 = random.sample(range(0, n_skus), 2)
     x_new[idx1] = x[idx2]
     x_new[idx2] = x[idx1]
-    return x_new
+    q.put(x_new)
 
 
-def ns_shuffle(x, *args):
+def ns_shuffle(q, x, *args):
     """ Returns a permutation of elements of x. """
     x_new = x[:]
     random.shuffle(x_new)
-    return x_new
+    q.put(x_new)
 
 
-def ns_mutate_random(x, min_cluster, max_cluster):
+def ns_mutate_random(q, x, min_cluster, max_cluster):
     """ Changes value of a random element of x. 
         The new values are between min_cluster and max_cluster inclusive. """
     x_new = x[:]
@@ -284,10 +206,10 @@ def ns_mutate_random(x, min_cluster, max_cluster):
     ex_cluster_number = x[idx]
     numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster))
     x_new[idx] = random.choice(numbers)
-    return x_new #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random(x, min_cluster, max_cluster)
+    q.put(x_new) #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random(x, min_cluster, max_cluster)
 
 
-def ns_mutate_random2(x, min_cluster, max_cluster):
+def ns_mutate_random2(q, x, min_cluster, max_cluster):
     """ Changes values of two random elements of x.
         The new values are between min_cluster and max_cluster inclusive. """
     x_new = x[:]
@@ -300,117 +222,10 @@ def ns_mutate_random2(x, min_cluster, max_cluster):
     numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster))
     x_new[idx2] = random.choice(numbers)
     
-    return x_new #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random2(x, min_cluster, max_cluster)
+    q.put(x_new) #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random2(x, min_cluster, max_cluster)
 
 
-def population_generator(failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
-    '''
-    #########Generating different populations###########
-    #1-FCFS->
-    #2-Shortest and longest proccessing->
-    #3-min and max holding cost->
-    #4-hxmu long lowest and highest->
-    #5-2 priority class versions of all above
-    '''
-    population=[]
-    
-    fcfs_rule=np.ones(len(failure_rates))
-    
-    population.append(fcfs_rule)
-    
-    ####faliure rate#########################
-    
-    priority=np.ones(len(failure_rates))
-    
-    k=1
-    for i in np.argsort(failure_rates):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority]) #two class based on failure rates
-   
-    
-    priority=np.ones(len(failure_rates))
-    
-    k=1
-    for i in np.flip(np.argsort(failure_rates),0):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    #####service rate#######################
-    
-    priority=np.ones(len(service_rates))
-    
-    k=1
-    for i in np.argsort(service_rates):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    
-    priority=np.ones(len(service_rates))
-    
-    k=1
-    for i in np.flip(np.argsort(service_rates),0):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    ###holding cost#######################
-    
-    priority=np.ones(len(holding_costs))
-    
-    k=1
-    for i in np.argsort(holding_costs):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    
-    
-    
-    priority=np.ones(len(holding_costs))
-    
-    k=1
-    for i in np.flip(np.argsort(holding_costs),0):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    
-    ###holding *service rate##############
-    
-    priority=np.ones(len(holding_costs))
-    
-    k=1
-    for i in np.argsort(np.array(holding_costs)*np.array(service_rates)):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    
-    priority=np.ones(len(holding_costs))
-    
-    k=1
-    for i in np.flip(np.argsort(np.array(holding_costs)*np.array(service_rates)),0):
-        priority[i]=k
-        k+=1
-    
-    population.append(priority)
-    population.append([2 if x >= len(priority)/2.0 else 1 for x in priority])
-    
-    return [list(x) for x in population]
-
-
-def solve_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, max_iters=1000):
+def solve_parallel_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, max_iters=1000):
     """Finds best solution x given an initial solution x,
        list shaking functions ngf, and
     """
@@ -424,19 +239,58 @@ def solve_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_
         better_found = False
         while k < len(nsf):
             # create neighborhood solution using kth ngf
-            x1 = ngf[k](x, min_cluster, max_cluster)
-            tcost_x1 = prune_and_evaluate(x1, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-            if tcost_x1 <= tcost_x:
-                print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(tcost_x1, iter_since_last_best))
-                x = x1
-                tcost_x = tcost_x1
+            n_cores = 8
+            processes = []
+            q = multiprocessing.Queue()
+            for _ in range(n_cores):
+                p = multiprocessing.Process(target=ngf[k],
+                                                       args=(q, x, min_cluster, max_cluster))
+                processes.append(p)
+                p.start()
+            
+            for prcs in processes:
+                prcs.join()
+
+            # get results (generated priorities)
+            x_list = []
+            while not q.empty():
+                x_list.append(q.get())
+
+            #print(x_list," diff neighbors")
+
+            # calculate total costs
+            processes2 = []
+            q2 = multiprocessing.Queue()
+            lck = multiprocessing.Lock()
+            for x_prime in x_list:
+                p2 = multiprocessing.Process(target=prune_and_evaluate_parallel,
+                                             args=(q2, lck, x_prime, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost))
+                processes2.append(p2)
+                p2.start()
+            
+            for prcs2 in processes2:
+                prcs2.join()
+
+            # get results (x_primes and thir corresponding total costs)
+            x_tc_list = []
+            while not q2.empty():
+                x_tc_list.append(q2.get())
+
+            #print(x_tc_list," distinct neighbors and costs")
+
+            min_x_prime, min_tcost = min(x_tc_list, key = lambda t : t[1])
+
+            if min_tcost <= tcost_x:
+                print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(min_tcost, iter_since_last_best))
+                x = min_x_prime
+                tcost_x = min_tcost
                 k = 0
                 better_found = True
-                if prev_best == tcost_x1 :
+                if prev_best == min_tcost :
                     same_consecutive_count += 1
                 else:
                     same_consecutive_count = 0
-                    prev_best = tcost_x1
+                    prev_best = min_tcost
             else:
                 k += 1                
         
@@ -448,16 +302,14 @@ def solve_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_
     return tcost_x, x, cache
 
 
-
 def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, numPriorityClass=1): 
    
     # 1 is for maximization -1 for minimization
     # Minimize total cost just EBO cost and holding cost at the moment 
     creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
     creator.create("Individual", list, fitness=creator.FitnessMax)
-   
     
-    
+
     def generatePriority(numSKUs, numPriorityClass=1):
         '''
         -assing priority classes to each SKU randomly for a given number of priority class
@@ -468,21 +320,9 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
 
     
     toolbox = base.Toolbox()
-
-    
     toolbox.register("individual", generatePriority, len(failure_rates), numPriorityClass)
-
-    
     # define the population to be a list of individuals
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-    # the goal ('fitness') function to be maximized
-    #for objective function call pooling optimizer !!!
-    # what values need for optimizer !!!
-    
-    
-    #def evalOneMax(individual):
-    #    return sum(individual),
 
     #----------
     # Operator registration
@@ -500,147 +340,27 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
 
     #----------
 
-    random.seed(64)
+    # random.seed(64)
 
     # create an initial population of 50 individuals (where
     # each individual is a list of integers)
-    
     start_time = time.time() #start time
-    
-    # pop = [creator.Individual(x) for x in population_generator(failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)]
-             
     pop = toolbox.population(n=1)
-   
-    print "Population", len(pop), pop
-    
-    #print("Start of evolution")
-    
     # Evaluate the entire population
     fitnesses = list(map(toolbox.evaluate, pop))
     
-    print "Fitness", fitnesses
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
     
-    print("  Evaluated %i individuals" % len(pop))
-
     # Extracting all the fitnesses of 
     fits = [ind.fitness.values[0] for ind in pop]
     best_cost=min(fits)
     best_priority=tools.selBest(pop, 1)[0]
-    
-    print best_priority 
     # Variable keeping track of the number of generations
-
-    best_cost, best_priority, cache = solve_rvns(cache, best_priority, nsf, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-
+    best_cost, best_priority, cache = solve_parallel_rvns(cache, best_priority, nsf, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     stop_time = time.time() - start_time
     
-    best_ind = tools.selBest(pop, 1)[0]
-    
-    return best_cost,best_priority, stop_time, cache
-
-
-
-def local_search(list_priority, cache, global_best_cost, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
-    
-    '''
-    list_priority: list of priority assigments that want to be included in the local search
-    
-    returns: 
-    
-    '''
-    
-    best_priority_list=[]
-    
-    #global_best_cost=float("inf")
-    
-    global_best_priority=[]
-    
-    global_best_priority[:]=list_priority[0]
-    
-    
-    #print cache 
-    
-    for priority in list_priority:
-        
-        
-        TotalCost=prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-         
-       
-        best_priority=[]
-        
-        temp_best_priority=[]
-        
-        best_priority[:]=priority
-        
-        temp_best_priority[:]=priority
-        
-        best_TotalCost=TotalCost
-        
-        gene_set=set(priority)
-        
-        #print gene_set
-        
-        #print  best_TotalCost, global_best_cost
-        
-        for i in range(len(priority)):
-            
-            for gene in gene_set:
-                
-                temp_best_priority[:]=best_priority
-                
-                if best_priority[i]!=gene:
-                    
-                    temp_best_priority[i]=gene
-                    
-                    TotalCost=prune_and_evaluate(temp_best_priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-        
-                  
-                    if TotalCost < best_TotalCost:
-                        
-                        best_TotalCost=TotalCost
-                        
-                        best_priority[:]=temp_best_priority
-                        
-                        if best_TotalCost< global_best_cost:
-                            
-                            global_best_cost= best_TotalCost
-                            
-                            global_best_priority[:] =best_priority
-                
-                #print best_TotalCost, global_best_cost      
-                    
-            if len(gene_set) < len(failure_rates): # to assign an independed priority class!
-                
-                diff_priority=set(range(1,len(failure_rates)+1)).difference(gene_set)
-                
-                for diff in [max(diff_priority), min(diff_priority)]:
-                    
-                    temp_best_priority[:]=best_priority
-                
-                    temp_best_priority[i]=diff
-                
-                    TotalCost=prune_and_evaluate(temp_best_priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-        
-                
-                    if TotalCost < best_TotalCost:
-                
-                        best_TotalCost=TotalCost
-                        
-                        best_priority[:]=temp_best_priority
-                        
-                        if best_TotalCost< global_best_cost:
-                            
-                            global_best_cost= best_TotalCost
-                            
-                            global_best_priority[:] =best_priority
-                            
-  
-        best_priority_list.append([best_priority, best_TotalCost])       
-                
-    return global_best_cost, global_best_priority, best_priority_list
-    
+    return best_cost, best_priority, stop_time, cache
 
 
 json_case=[]
@@ -650,7 +370,7 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
         json_case.append(json.loads(line))
         
 # shaking functions
-indices = [0,1,2,3,4,5]
+indices = [0,1]
 fname = "".join(map(str,indices))
 nsf = [ns_mutate_random, ns_mutate_random2, ns_shuffle, ns_two_way_swap, ns_throas_mutation, ns_center_inverse_mutation]
 nsf = [nsf[i] for i in indices]
@@ -673,8 +393,8 @@ for case in json_case[0]:
             VNS_SimOpt={}
             numPriorityClass=len(FailureRates) #making equal to number of SKUs
                     
-            ##############GA RUN############
-            print "running VNS for case ", case["caseID"]
+            ##############VNS RUN############
+            print "running VNS for ", case["caseID"]
             cache={}
             best_cost, best_priority, run_time, cache  =VNS_Priority(cache, FailureRates, ServiceRates,holding_costs, penalty_cost,skillCost, machineCost, numPriorityClass) 
                     
@@ -703,17 +423,10 @@ for case in json_case[0]:
             #####
         
             Results.append(VNS_SimOpt)        
-            tot_cases +=1 
+            tot_cases += 1 
             if tot_cases == 3:
                 break           
                 
                 
-#analysis number of priority classes
-#assigment per priority class
-#min required sever vs optimized server number
-#cost distribution machine vs holding vs backorder
-#comparision with benchmark
-#comparison with regular GA
-
 with open(fname+'_Improved_VNS_Priority_32_instance.json', 'w') as outfile:
     json.dump(Results, outfile)

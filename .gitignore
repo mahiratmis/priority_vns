@@ -1,0 +1,5 @@
+# gnore vscode 
+/.vscode/
+
+# ignore pyc files
+*.pyc

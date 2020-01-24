@@ -712,25 +712,18 @@ for case in json_case[0]:
             numPriorityClass=len(FailureRates) #making equal to number of SKUs
                     
             ##############GA RUN############
-            print "running GA"
+            print "running GA for", case["caseID"]
             cache={}
             best_cost, best_priority, run_time,  best_cost_record, record_of_min, _,_, cache            =GA_Priority(cache, FailureRates, ServiceRates,                                                       holding_costs, penalty_cost,                                                       skillCost, machineCost, numPriorityClass) 
-                    
             print best_cost, best_priority
-                    
             print "GA is over"
-                    
             print "=============="
                     
-            start_time = time.time() #start time
-    
-            list_priority=[best_priority] #selection procedure is needed here !!!
-                    
-            global_best_cost, global_best_priority, best_priority_list=local_search(list_priority,  cache, best_cost, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, machineCost)
-        
-            end_time=time.time()-start_time
-            
-            print global_best_cost, global_best_priority, best_priority_list
+            # start_time = time.time() #start time
+            # list_priority=[best_priority] #selection procedure is needed here !!!
+            # global_best_cost, global_best_priority, best_priority_list=local_search(list_priority,  cache, best_cost, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, machineCost)
+            # end_time=time.time()-start_time
+            # print global_best_cost, global_best_priority, best_priority_list
 
             ####################RECORDING RESULTS##################
             ###GA Outputs
@@ -741,10 +734,10 @@ for case in json_case[0]:
             GA_SimOpt["record_of_min"]=record_of_min
                     
             ###Local Search Outputs
-            GA_SimOpt["global_best_cost"]=global_best_cost
-            GA_SimOpt["global_best_priority"]=global_best_priority
-            GA_SimOpt["best_priority_list"]=best_priority_list
-            GA_SimOpt["global_run_time"]=run_time+end_time
+            # GA_SimOpt["global_best_cost"]=global_best_cost
+            # GA_SimOpt["global_best_priority"]=global_best_priority
+            # GA_SimOpt["best_priority_list"]=best_priority_list
+            # GA_SimOpt["global_run_time"]=run_time+end_time
                     
             ###inputs
             GA_SimOpt["CaseID"]=case["caseID"]
@@ -760,8 +753,7 @@ for case in json_case[0]:
             #####
         
             Results.append(GA_SimOpt)
-                   
-            print "run completed"
+            print "statistics cached for run"
                 
                 
 #analysis number of priority classes
@@ -773,24 +765,3 @@ for case in json_case[0]:
 
 with open('Improved_GA_Priority_32_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
-
-
-json_case2=[]
-with open("Improved_GA_Priority_32_instance.json", "r") as json_file2:
-    #json_file.readline()
-    for line in json_file2:
-        json_case2.append(json.loads(line))
-        
-
-
-df=pd.DataFrame.from_dict(json_case2[0])
-
-
-df.keys()
-
-
-df['global_best_cost']=df['global_best_cost'].map(lambda x:  x[0] if type(x)==list else x)
-
-
-df[["CaseID","GA_best_cost", "global_best_cost"]]
-
