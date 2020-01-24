@@ -365,7 +365,7 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
     best_cost=min(fits)
     best_priority=tools.selBest(pop, 1)[0]
     # Variable keeping track of the number of generations
-    best_cost, best_priority, cache = solve_parallel_rvns_v2s(cache, best_priority, nsf, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    best_cost, best_priority, cache = solve_parallel_rvns_v2(cache, best_priority, nsf, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     stop_time = time.time() - start_time
     
     return best_cost, best_priority, stop_time, cache
