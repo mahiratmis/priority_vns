@@ -238,14 +238,16 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
     iter_since_last_best = 0
     same_consecutive_count = 0
     prev_best = 0
+    n_cores = 8
+    q = multiprocessing.Queue()
+    q2 = multiprocessing.Queue()
+    lck = multiprocessing.Lock()
     while(iter_since_last_best < 100 and same_consecutive_count < 10 ):
         better_found = False
         local_better_found = True
         while local_better_found:
             local_better_found = False
-            n_cores = 8
             processes = []
-            q = multiprocessing.Queue()
             # half from first neighborhood
             for _ in range(n_cores//2):
                 p = multiprocessing.Process(target=ngf[0],
@@ -259,6 +261,7 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
                 processes.append(p)
                 p.start()
             
+            # wait for processes to finish their tasks 
             for prcs in processes:
                 prcs.join()
 
@@ -267,35 +270,30 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
             while not q.empty():
                 x_list.append(q.get())
 
-            #print(x_list," diff neighbors")
-
             # calculate total costs
             processes2 = []
-            q2 = multiprocessing.Queue()
-            lck = multiprocessing.Lock()
             for x_prime in x_list:
                 p2 = multiprocessing.Process(target=prune_and_evaluate_parallel,
                                              args=(q2, lck, x_prime, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost))
                 processes2.append(p2)
                 p2.start()
             
+            # wait for processes to finish their tasks 
             for prcs2 in processes2:
                 prcs2.join()
 
-            # get results (x_primes and thir corresponding total costs)
+            # get results (x_primes and their corresponding total costs)
             x_tc_list = []
             while not q2.empty():
                 x_tc_list.append(q2.get())
 
-            #print(x_tc_list," distinct neighbors and costs")
-
+            # find min cost and priority
             min_x_prime, min_tcost = min(x_tc_list, key = lambda t : t[1])
 
             if min_tcost <= tcost_x:
                 print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(min_tcost, iter_since_last_best))
                 x = min_x_prime
                 tcost_x = min_tcost
-                k = 0
                 better_found = True
                 local_better_found = True
                 if prev_best == min_tcost :
