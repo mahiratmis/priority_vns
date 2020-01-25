@@ -327,6 +327,6 @@ for case in json_case[0]:
 #comparision with benchmark
 #comparison with regular GA
 
-with open(str(var_level*100)+"_"+'Simple_GA_Priority_RiskAverse.json', 'w') as outfile:
+with open(str(var_level*100)+"_"+'Simple_GA_Priority_RiskAverse_16_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
 

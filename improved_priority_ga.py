@@ -51,29 +51,23 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
     that number of servers 
     
     '''
-
     min_nserver=int(sum(np.array(FailureRates)/np.array(ServiceRates)))+1    #min required servers
-    
     assignment=np.ones((min_nserver, len(FailureRates)))
     
-    
-    holding_backorder_CostList =                     simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,                                            holding_costs, penalty_cost, assignment,                                             priority,
+    holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =10)
                     
     Server_Cost=min_nserver*machineCost
-    
     TotalCost=np.mean(holding_backorder_CostList)+Server_Cost
-    
-        
     while True:
         #print min_nserver
         min_nserver+=1 
         #print min_nserver
         assignment=np.ones((min_nserver, len(FailureRates)))
         
-        temp_holding_backorder_CostList =                     simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,                                            holding_costs, penalty_cost, assignment,                                             priority,
+        temp_holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =10)
@@ -129,33 +123,12 @@ def encode(x):
 def prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
     
     priority_rep=encode(priority)
-    
-    #print priority_rep
-    
     if priority_rep in cache.keys():
-        
-        #print "in cache"
-        
         return cache[priority_rep]
-    
-    else:
-        
-        #may need to check cache length
-        #print "update cache"
-        
-        min_nserver, TotalCost, Server_Cost, _=optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-        
-        
-        if len(cache)<10000: #len of cache
-        
-            cache[priority_rep]=TotalCost
-        
-            #print "update cache"
-        #else:
-            
-            #print "cache is full"
-        
-        return TotalCost
+    _, TotalCost, _, _=optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    if len(cache)<10000: #len of cache
+        cache[priority_rep]=TotalCost
+    return TotalCost
 
 
 ###Fitness Evaulation function
@@ -716,8 +689,7 @@ for case in json_case[0]:
             cache={}
             best_cost, best_priority, run_time,  best_cost_record, record_of_min, _,_, cache            =GA_Priority(cache, FailureRates, ServiceRates,                                                       holding_costs, penalty_cost,                                                       skillCost, machineCost, numPriorityClass) 
             print best_cost, best_priority
-            print "GA is over"
-            print "=============="
+
                     
             # start_time = time.time() #start time
             # list_priority=[best_priority] #selection procedure is needed here !!!

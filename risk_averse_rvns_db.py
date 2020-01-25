@@ -402,5 +402,5 @@ for case in json_case[0]:
                     break           
                 
 
-with open(str(var_level*100)+"_"+fname+'_Improved_VNS_Priority_32_instance.json', 'w') as outfile:
+with open(str(var_level*100)+"_"+fname+'_RiskAverse_VNS_Priority_16_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
