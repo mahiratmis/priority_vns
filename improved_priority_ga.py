@@ -670,6 +670,7 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
 #################INTEGRATING pruning and cache TO GA#####################################
 
 Results=[]
+tot_cases=0
 for case in json_case[0]:
     if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
         if case['simulationGAresults']['skill_cost_factor']==0.1:
@@ -726,6 +727,9 @@ for case in json_case[0]:
         
             Results.append(GA_SimOpt)
             print "statistics cached for run"
+            tot_cases += 1 
+            if tot_cases == 3:
+                break   
                 
                 
 #analysis number of priority classes
@@ -735,5 +739,5 @@ for case in json_case[0]:
 #comparision with benchmark
 #comparison with regular GA
 
-with open('Improved_GA_Priority_32_instance.json', 'w') as outfile:
+with open('Improved_GA_Priority_'+str(tot_cases)+'_instance.json', 'w') as outfile:
     json.dump(Results, outfile)

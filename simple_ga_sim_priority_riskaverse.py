@@ -265,6 +265,7 @@ var_level = 5
 #################SIMPLE GA RUNS #####################################
 
 Results=[]
+tot_cases = 0
 for case in json_case[0]:
     if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
         if case['simulationGAresults']['skill_cost_factor']==0.1:
@@ -320,6 +321,10 @@ for case in json_case[0]:
                    
                 print case["caseID"], "run completed"
                 
+                tot_cases += 1 
+                if tot_cases == 3:
+                    break  
+                
 #analysis number of priority classes
 #assigment per priority class
 #min required sever vs optimized server number
@@ -327,6 +332,6 @@ for case in json_case[0]:
 #comparision with benchmark
 #comparison with regular GA
 
-with open(str(var_level*100)+"_"+'Simple_GA_Priority_RiskAverse_16_instance.json', 'w') as outfile:
+with open(str(var_level*100)+"_"+'Simple_GA_Priority_RiskAverse_'+str(tot_cases)+'_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
 
