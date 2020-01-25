@@ -394,7 +394,7 @@ for case in json_case[0]:
                 #####
 
                 ### risk averse parameter
-                VNS_SimOpt["var_level"]= var_level
+                VNS_SimOpt["var_level"]= var_level*100
             
                 Results.append(VNS_SimOpt)        
                 tot_cases += 1 
@@ -402,5 +402,5 @@ for case in json_case[0]:
                     break           
                 
 
-with open(fname+'_Improved_VNS_Priority_32_instance.json', 'w') as outfile:
+with open(str(var_level*100)+"_"+fname+'_Improved_VNS_Priority_32_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
