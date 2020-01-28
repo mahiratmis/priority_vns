@@ -82,6 +82,49 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
     return min_nserver, TotalCost, Server_Cost, TotalCost-Server_Cost
 
 
+####PRUNE and DATABASE ###################
+def set_multipliers(len_sku):
+    #global multipliers
+    multipliers = 2**np.arange(len_sku-1,-1,-1)
+    return multipliers
+
+
+def encode(x):
+    """ 
+    Encode x as a sorted list of base10 representation to detect symmetries.
+        
+    First, for each cluster determine which SKU types are available.
+        x = [1,1,2] means in cluster 1 there are SKU1 and SKU2 in cluster 2 there is only SKU3
+        So the binary representation(skill-server assignment) is below. 
+        Each inner list represents a server and binary values denote if that server has the skill or not. 
+        
+        Examples of solutions that are symmetric to x, their binary and base 10 represetations:
+               x     binary representation   base10 representation
+            -------  ---------------------    ------------------
+            [1,1,2]  [[1,1,0], [0,0,1]]             [6,1]
+            [1,1,3]  [[1,1,0], [0,0,1]]             [6,1]
+            [2,2,1]  [[0,0,1], [1,1,0]]             [1,6]
+            [2,2,3]  [[1,1,0], [0,0,1]]             [6,1]
+            [3,3,1]  [[0,0,1], [1,1,0]]             [1,6]
+            [3,3,2]  [[0,0,1], [1,1,0]]             [1,6]
+    :param x, sample solution
+    """
+    multipliers=set_multipliers(len(x))
+    return tuple([sum([multipliers[j] for j,c2 in enumerate(x) if c2 == c]) for c in set(x)]) 
+
+
+def prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
+    priority_rep = encode(priority)
+    if priority_rep in cache.keys():
+        return cache[priority_rep]
+    #may need to check cache length
+    _, TotalCost, _, _= optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    
+    if len(cache)<10000: #len of cache
+        cache[priority_rep]=TotalCost
+    return TotalCost
+
+
 ###Fitness Evaulation function
 #### CaLls simulation 
 ###cache is the database 
@@ -108,7 +151,7 @@ def Fitness(cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skil
     Warning !! type matching array vs list might be problem (be careful about type matching)
     
     '''
-    _, TotalCost, _, _= optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost,  machineCost)
+    TotalCost = prune_and_evaluate(priority, cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost,  machineCost)
     return TotalCost,  
         
 
@@ -193,7 +236,7 @@ def solve_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_
        list shaking functions ngf, and
     """
     x = initial_priority 
-    _, tcost_x, _, _= optimal_server_number(x, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    tcost_x = prune_and_evaluate(x, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     iter_since_last_best = 0
     same_consecutive_count = 0
     prev_best = 0
@@ -203,7 +246,7 @@ def solve_rvns( cache, initial_priority, ngf, min_cluster, max_cluster, failure_
         while k < len(nsf):
             # create neighborhood solution using kth ngf
             x1 = ngf[k](x, min_cluster, max_cluster)
-            _, tcost_x1, _, _= optimal_server_number(x1, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+            tcost_x1 = prune_and_evaluate(x1, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
             if tcost_x1 <= tcost_x:
                 print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(tcost_x1, iter_since_last_best))
                 x = x1
@@ -310,7 +353,9 @@ for case in json_case[0]:
     if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
         if case['simulationGAresults']['skill_cost_factor']==0.1:
             if case['simulationGAresults']['utilization_rate'] ==0.8:
-                    
+                tot_cases += 1 
+                if tot_cases == 4:
+                    break         
                 FailureRates=np.array(case['simulationGAresults']["failure_rates"])
                 ServiceRates=np.array(case['simulationGAresults']["service_rates"])
                 holding_costs=np.array(case['simulationGAresults']["holding_costs"])
@@ -354,10 +399,8 @@ for case in json_case[0]:
                 VNS_SimOpt["var_level"]= var_level*100
             
                 Results.append(VNS_SimOpt)        
-                tot_cases += 1 
-                if tot_cases == 3:
-                    break           
+         
                 
 
-with open(str(var_level*100)+"_"+fname+'_RiskAverse_VNS_Priority_'+str(tot_cases)+'_instance.json', 'w') as outfile:
+with open("db_"+str(var_level*100)+"_"+fname+'_RiskAverse_VNS_Priority_'+str(tot_cases)+'_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
