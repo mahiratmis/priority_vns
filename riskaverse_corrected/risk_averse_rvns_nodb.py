@@ -1,5 +1,4 @@
-#PRUNE and DATABASE available
-
+# NO PRUNE and DATABASE 
 import numpy as np
 import math
 import sys
@@ -21,9 +20,10 @@ random.seed(60)
 np.random.seed(60)
 
 lamda=0.5
-var_level=0.0
+var_level=0.5
+prefix = "vns_nodb_v{}_l{}_".format(int(var_level*100), int(lamda*100)) 
 
-###Prune function has to defined earlier 
+
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
     
     '''
@@ -34,19 +34,15 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
 
     
     min_nserver=int(sum(np.array(FailureRates)/np.array(ServiceRates)))+1    #min required servers
-    
     assignment=np.ones((min_nserver, len(FailureRates)))
     
-    
-    holding_backorder_CostList =                     simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, FailureRates, ServiceRates,                                            holding_costs, penalty_cost, assignment,                                             priority,
+    holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =40)
                     
     Server_Cost=min_nserver*machineCost
-    
     TotalCost=np.mean(holding_backorder_CostList)+Server_Cost
-    
         
     while True:
         #print min_nserver
@@ -54,7 +50,7 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
         #print min_nserver
         assignment=np.ones((min_nserver, len(FailureRates)))
         
-        temp_holding_backorder_CostList =                     simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda, var_level,FailureRates, ServiceRates,                                            holding_costs, penalty_cost, assignment,                                             priority,
+        temp_holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda, var_level,FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =40)
@@ -72,8 +68,6 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
         
     
     return min_nserver, TotalCost, Server_Cost, TotalCost-Server_Cost
-
-
 
 ###Fitness Evaulation function
 #### CaLls simulation 
@@ -289,7 +283,7 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
 # shaking functions
 indices = [0,1]
 fname = "".join(map(str,indices))
-fname += "_nodb_"+str(var_level)+'_RiskAverse_VNS_Priority_16_instance.json'
+fname += '_RiskAverse_Priority_16_instance.json'
 nsf = [ns_mutate_random, ns_mutate_random2, ns_shuffle, ns_two_way_swap, ns_throas_mutation, ns_center_inverse_mutation]
 nsf = [nsf[i] for i in indices]
 
@@ -345,11 +339,13 @@ for case in json_case[0]:
                 VNS_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
                 #####
 
-                ### risk averse parameter
+                  ### risk averse parameters
                 VNS_SimOpt["var_level"]= var_level
-                print case["caseID"], "run completed"
+                VNS_SimOpt["lamda"]= lamda
+
                 Results.append(VNS_SimOpt)        
+                print case["caseID"], "run completed"  
                 
 
-with open(fname, 'w') as outfile:
+with open(prefix+fname, 'w') as outfile:
     json.dump(Results, outfile)

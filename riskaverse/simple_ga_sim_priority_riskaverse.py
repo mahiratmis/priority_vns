@@ -22,7 +22,6 @@ import sys
 import json
 import pandas as pd
 import time
-import time
 import random
 import matplotlib.pyplot as plt
 from deap import base
@@ -32,7 +31,9 @@ import itertools
 
 import simulation_codes  #Andre's package that used in simulation opt.
 
-
+# reproducability
+random.seed(60)
+np.random.seed(60)
 ###Fitness Evaulation function
 #### CaLls simulation 
 def Fitness(FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, machineCost,  priority):
@@ -250,8 +251,8 @@ def GA_Priority(failure_rates, service_rates, holding_costs, penalty_cost, skill
     
     stop_time = time.time() - start_time
     best_ind = tools.selBest(pop, 1)[0]
-    
     return best_ind.fitness.values, best_ind, stop_time, best_cost_record, record_of_min, best_cost,best_priority
+
 
 json_case=[]
 with open("GAPoolingAll_4a.json", "r") as json_file:
