@@ -98,16 +98,16 @@ def population_generator2(failure_rates, service_rates, holding_costs, penalty_c
     return [list(x) for x in population]
 
 
-var_level=5
+var_level=95
 json_case2=[]
-with open("Improved_GA_Priority_32_instance.json", "r") as json_file2:
+with open("./riskaverse/results/riskaverse.json", "r") as json_file2:
     #json_file.readline()
     for line in json_file2:
         json_case2.append(json.loads(line))
 
 df=pd.DataFrame.from_dict(json_case2[0])
 #df.keys()
-df['global_best_cost']=df['global_best_cost'].map(lambda x:  x[0] if type(x)==list else x)
+# df['global_best_cost']=df['global_best_cost'].map(lambda x:  x[0] if type(x)==list else x)
 #df[["CaseID","GA_best_cost", "global_best_cost"]]
 
 
@@ -150,6 +150,6 @@ df["H_rule_cost"]=pd.Series(H_rule)
 df["HMU_rule_cost"]=pd.Series(HMU_rule)
 
 ### risk averse parameter
-df["var_level"] = var_level*100
+df["var_level"] = var_level
 
-df.to_json(str(var_level*100)+"_bechmark_rules_priority_simopt_riskaverse.json")
+df.to_json(str(var_level)+"_bechmark_rules_priority_simopt_riskaverse.json")

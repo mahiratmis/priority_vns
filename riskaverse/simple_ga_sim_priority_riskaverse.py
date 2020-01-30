@@ -72,7 +72,7 @@ def Fitness(FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, 
     
     ############################BELOW code calculates risk averse expected backorder and holding cost###########
     holding_backorder_CostList = np.array(holding_backorder_CostList)
-    var = np.percentile(holding_backorder_CostList, 100 - var_level) #95%
+    var = np.percentile(holding_backorder_CostList, var_level) #95%
     cvar_plus = holding_backorder_CostList[holding_backorder_CostList > var].mean() 
     var_level_p = var_level / 100.0
     cdf_var = holding_backorder_CostList[holding_backorder_CostList <= var].size / (1.0*holding_backorder_CostList.size)
@@ -260,7 +260,7 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
         json_case.append(json.loads(line))
 
 # risk averse parameters
-var_level = 5
+var_level = 95
 
 #################SIMPLE GA RUNS #####################################
 
@@ -319,7 +319,7 @@ for case in json_case[0]:
                 #####
 
                 ### risk averse parameter
-                GA_SimOpt["var_level"]= var_level*100
+                GA_SimOpt["var_level"]= var_level
 
                 Results.append(GA_SimOpt)
                    
@@ -332,6 +332,6 @@ for case in json_case[0]:
 #comparision with benchmark
 #comparison with regular GA
 
-with open("simple_ga_"+str(var_level*100)+"_"+'Simple_GA_Priority_RiskAverse_'+str(tot_cases)+'_instance.json', 'w') as outfile:
+with open('simple_ga_'+str(var_level)+'_Priority_RiskAverse_16_instance.json', 'w') as outfile:
     json.dump(Results, outfile)
 

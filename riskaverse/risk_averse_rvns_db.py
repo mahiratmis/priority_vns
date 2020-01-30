@@ -43,7 +43,7 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
     
     #############################BELOW code calculates risk averse expected backorder and holding cost###########
     holding_backorder_CostList=np.array(holding_backorder_CostList)
-    var = np.percentile(holding_backorder_CostList, 100 - var_level) #95%
+    var = np.percentile(holding_backorder_CostList,var_level) #95%
     cvar_plus = holding_backorder_CostList[holding_backorder_CostList > var].mean() 
     var_level_p = var_level / 100.0
     cdf_var = holding_backorder_CostList[holding_backorder_CostList <= var].size / (1.0*holding_backorder_CostList.size)
@@ -64,7 +64,7 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
 
         #########RISK AVERSE #################
         temp_holding_backorder_CostList=np.array(temp_holding_backorder_CostList)
-        temp_var = np.percentile(temp_holding_backorder_CostList, 100 - var_level) #95%
+        temp_var = np.percentile(temp_holding_backorder_CostList, var_level) #95%
         temp_cvar_plus = temp_holding_backorder_CostList[temp_holding_backorder_CostList > temp_var].mean() 
         temp_cdf_var = temp_holding_backorder_CostList[temp_holding_backorder_CostList <= temp_var].size / (1.0*temp_holding_backorder_CostList.size)
         lamda = (temp_cdf_var-var_level_p)/(1-var_level_p)
@@ -116,8 +116,10 @@ def encode(x):
 def prune_and_evaluate(priority, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost):
     priority_rep = encode(priority)
     if priority_rep in cache.keys():
+        cache_hit += 1
         return cache[priority_rep]
     #may need to check cache length
+    cache_miss += 1
     _, TotalCost, _, _= optimal_server_number(priority, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     
     if len(cache)<10000: #len of cache
@@ -339,11 +341,15 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
 # shaking functions
 indices = [0,1]
 fname = "".join(map(str,indices))
+fname += '_db_'+str(var_level)+'_RiskAverse_VNS_Priority_16_instance.json'
 nsf = [ns_mutate_random, ns_mutate_random2, ns_shuffle, ns_two_way_swap, ns_throas_mutation, ns_center_inverse_mutation]
 nsf = [nsf[i] for i in indices]
 
 # risk averse parameters
-var_level = 5
+var_level = 95
+# cache statistics
+cache_hit = 0
+cache_miss = 0
 
 #################INTEGRATING pruning and cache TO GA#####################################
 
@@ -396,11 +402,11 @@ for case in json_case[0]:
                 #####
 
                 ### risk averse parameter
-                VNS_SimOpt["var_level"]= var_level*100
+                VNS_SimOpt["var_level"]= var_level
             
                 Results.append(VNS_SimOpt)        
          
-                
+print("Cache Hit:", cache_hit, "Cache Miss:", cache_miss)                
 
-with open("db_"+str(var_level*100)+"_"+fname+'_RiskAverse_VNS_Priority_'+str(tot_cases)+'_instance.json', 'w') as outfile:
+with open(fname, 'w') as outfile:
     json.dump(Results, outfile)
