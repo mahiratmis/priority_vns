@@ -395,9 +395,12 @@ for case in json_case[0]:
 
                 Results.append(VNS_SimOpt)        
                 print case["caseID"], "run completed"
+                print("Cache Hit:", cache_hit, "Cache Miss:", cache_miss)  
+                cache_hit = 0
+                cache_miss = 0
 
          
-print("Cache Hit:", cache_hit, "Cache Miss:", cache_miss)                
+              
 
 with open(prefix+fname, 'w') as outfile:
     json.dump(Results, outfile)
