@@ -302,7 +302,7 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
 
         a=np.cumsum(Prob_BO)
 
-        idx=np.where(a == a[a>=var_level].min())[0][0]
+        idx=np.where(a == a[a>=1-var_level].min())[0][0]
 
         #print idx #this is var value 
 
