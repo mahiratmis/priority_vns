@@ -301,7 +301,6 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
 
     #----------
 
-    # random.seed(64)
 
     # create an initial population of 50 individuals (where
     # each individual is a list of integers)

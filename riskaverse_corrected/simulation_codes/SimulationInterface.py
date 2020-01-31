@@ -238,14 +238,12 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
     #hb_ratio = holdingCosts/penalty
 
     #calculate new critical fractions
-    print("a")
     rho=(penalty-holdingCosts)/penalty
 
     #print min(rho), max(rho)
 
     #update rho based on lamda and var_level
 
-    print("b")
     critical_ratio= np.zeros(nSKUs, dtype=float)
     
     for sk in xrange(nSKUs):
@@ -266,7 +264,6 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
 
 
     
-    print("c")
     for sk in xrange(nSKUs):
         while S[sk]<maxQueue-1 and np.sum(marginalDistribution[sk, :S[sk]+1]) <= critical_ratio[sk]:
             S[sk] += 1
@@ -286,10 +283,7 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
 
     S_riskaverse=[]
 
-    print("d")
     for sk in xrange(nSKUs):
-        print("Error Here")
-        print sk, len(marginalDistribution[sk,S[sk]:])
         Prob_BO=np.zeros(len(marginalDistribution[sk,S[sk]:]), dtype=float) #back order dist. for SKU sk
 
         Prob_BO[0]=1-PBO[sk] #0 backorder prob
@@ -321,13 +315,11 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
 
     #print S_riskaverse
 
-    print("e")
     totalCost = np.sum(S*holdingCosts) + lamda*np.sum(penalty*EBO)+(1-lamda)*np.sum(penalty*np.array(S_riskaverse))
 
     #print S
 
     #print Prob_BO
-    print "heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     return totalCost, S, EBO
 
 # writeToDB = writeToDB1

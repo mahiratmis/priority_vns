@@ -17,9 +17,9 @@ import simulation_codes  #Andre's package that used in simulation opt.
 random.seed(60)
 np.random.seed(60)
 
-lamda=0.5
-var_level=0.5
-prefix = "simple_ga_v{}_l{}_".format(int(var_level*100), int(lamda*100))  
+lamda=0.5 #test 0, 0.5, 1
+var_level=0.05
+prefix = "vns_db_v{}_l{}_".format(int(var_level*100), int(lamda*100)) 
 
 
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
@@ -181,7 +181,6 @@ def GA_Priority(failure_rates, service_rates, holding_costs, penalty_cost, skill
     # is replaced by the 'fittest' (best) of three individuals
     # drawn randomly from the current generation.
     toolbox.register("select", tools.selTournament, tournsize=10)
-    random.seed(64)
     
     start_time = time.time() #start time
     pop = toolbox.population(n=100)

@@ -19,9 +19,9 @@ import simulation_codes  #Andre's package that used in simulation opt.
 random.seed(60)
 np.random.seed(60)
 
-lamda=0.5
-var_level=0.5
-prefix = "vns_nodb_v{}_l{}_".format(int(var_level*100), int(lamda*100)) 
+lamda=0.5 #test 0, 0.5, 1
+var_level=0.05
+prefix = "vns_db_v{}_l{}_".format(int(var_level*100), int(lamda*100)) 
 
 
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
@@ -251,7 +251,6 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
 
     #----------
 
-    # random.seed(64)
 
     # create an initial population of 50 individuals (where
     # each individual is a list of integers)
