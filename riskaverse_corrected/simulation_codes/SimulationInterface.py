@@ -16,7 +16,7 @@ database = None
 
 stopNrRequestsDefault = 1000000
 replicationsDefault = 35
-maxQueue = 1500
+maxQueue = 3000 #increased from 1500
 rounding_decimals = 5
 nCores = None  # maximum number of cores will be used
 
@@ -247,6 +247,12 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
 
     print("b")
     critical_ratio= np.zeros(nSKUs, dtype=float)
+    
+    for sk in xrange(nSKUs):
+        
+        #try to normalize
+    
+        marginalDistribution[sk]=marginalDistribution[sk]/np.sum(marginalDistribution[sk])
 
     for sk in xrange(nSKUs):
 
@@ -262,7 +268,7 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
     
     print("c")
     for sk in xrange(nSKUs):
-        while S[sk]<maxQueue and np.sum(marginalDistribution[sk, :S[sk]+1]) <= critical_ratio[sk]:
+        while S[sk]<maxQueue-1 and np.sum(marginalDistribution[sk, :S[sk]+1]) <= critical_ratio[sk]:
             S[sk] += 1
             PBO[sk] = np.sum(marginalDistribution[sk,S[sk]+1:]) # -= marginalDistribution[sk, S[sk]]
             EBO[sk] = np.sum(marginalDistribution[sk,S[sk]:]*n_array[:-S[sk]]) #-= PBO[sk]
