@@ -23,8 +23,8 @@ cache_miss = 0
 random.seed(60)
 np.random.seed(60)
 
-lamda=0.5
-var_level=0.95
+lamda=0.5 #test 0, 0.5, 1
+var_level=0.05
 prefix = "vns_db_v{}_l{}_".format(int(var_level*100), int(lamda*100))  
 
 
