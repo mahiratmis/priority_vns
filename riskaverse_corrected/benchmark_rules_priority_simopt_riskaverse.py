@@ -14,7 +14,7 @@ import simulation_codes  #Andre's package that used in simulation opt.
 lamda = 0.5 #test 0, 0.5, 1
 var_level = 0.05
 out_fname = "benchmark_rules_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
-input_fname = "results/nvs_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
+input_fname = "results/combined_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
 
 
 ###Prune function has to defined earlier
@@ -99,7 +99,9 @@ with open(input_fname, "r") as json_file2:
     for line in json_file2:
         json_case2.append(json.loads(line))
 
-df=pd.DataFrame.from_dict(json_case2[0])
+json_case2 = [item for sublist in json_case2[0] for item in sublist]
+
+df=pd.DataFrame.from_dict(json_case2)
 
 SPT=[]
 H_rule=[]
