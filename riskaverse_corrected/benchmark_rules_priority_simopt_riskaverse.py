@@ -31,24 +31,15 @@ def optimal_server_number3(priority, FailureRates, ServiceRates, holding_costs, 
     Min_server=min_nserver
     assignment=np.ones((min_nserver, len(FailureRates)))
     
-    holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority(FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
+    
+    holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
                                   replications =40)
                     
     Server_Cost=min_nserver*machineCost
-    
-    ############################BELOW code calculates risk averse expected backorder and holding cost###########
-    holding_backorder_CostList=np.array(holding_backorder_CostList)
-    var = np.percentile(holding_backorder_CostList, 100 - var_level) #95%
-    cvar_plus = holding_backorder_CostList[holding_backorder_CostList > var].mean() 
-    var_level_p = var_level / 100.0
-    cdf_var = holding_backorder_CostList[holding_backorder_CostList <= var].size / (1.0*holding_backorder_CostList.size)
-    lamda = (cdf_var-var_level_p)/(1-var_level_p)
-    risk_averse_cost = lamda*var+ (1-lamda)*cvar_plus
-
-    TotalCost = risk_averse_cost+Server_Cost  #this is now risk averse code 
-    
+    TotalCost=np.mean(holding_backorder_CostList)+Server_Cost
+  
     return Min_server, min_nserver, TotalCost, Server_Cost, TotalCost-Server_Cost
 
 #########Generating different populations###########
@@ -98,7 +89,10 @@ def population_generator2(failure_rates, service_rates, holding_costs, penalty_c
     return [list(x) for x in population]
 
 
-var_level=95
+lamda=0.5 #test 0, 0.5, 1
+var_level=0.05
+
+
 json_case2=[]
 with open("./riskaverse/results/riskaverse.json", "r") as json_file2:
     #json_file.readline()
