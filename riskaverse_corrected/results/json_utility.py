@@ -18,7 +18,7 @@ def json_to_csv(out_fname="db_results_combined.csv",
     write_header = True
     with open(out_fname, 'a') as csvfile:
         for file in files_with_extension(path, pattern):
-            with open(file.name, 'r') as json_file:
+            with open(file, 'r') as json_file:
                 for line in json_file:
                     cases = json.loads(line)
                     for case in cases:
@@ -38,18 +38,11 @@ def combine_jsons(out_fname="db_results_combined.json", path=".", pattern="*.jso
 lamda = 1 #test 0, 0.5, 1
 var_level = 0.05
 
-## vns no db
-#o_fname = "combined_vns_nodb"
-#pttern = "vns_nodb*.json"
-
-## vns db
-#o_fname = "combined_vns_db"
-#pttern = "vns_db*.json"
-
-# seperate
-#o_fname = "combined_vns_db_v{}_l{}_priority_simopt_riskaverse".format(int(var_level*100), int(lamda*100))
-#pttern = "vns_db_v{}_l{}*.json".format(int(var_level*100), int(lamda*100))
-o_fname = "combined_vns_nodb_v{}_l{}_priority_simopt_riskaverse".format(int(var_level*100), int(lamda*100))
-pttern = "vns_nodb_v{}_l{}*.json".format(int(var_level*100), int(lamda*100))
-combine_jsons(out_fname=o_fname+".json", pattern=pttern)
-json_to_csv(out_fname=o_fname+".csv", pattern=pttern)
+#
+db_nodb = "benchmark"
+pth = "{}".format(db_nodb)
+o_dir_json = pth + "/combined/json/combined_vns_{}_v{}_l{}_priority_simopt_riskaverse".format(db_nodb, int(var_level*100), int(lamda*100))
+o_dir_csv = pth + "/combined/csv/combined_vns_{}_v{}_l{}_priority_simopt_riskaverse".format(db_nodb, int(var_level*100), int(lamda*100))
+pttern = "*{}_v{}_l{}*.json".format(db_nodb, int(var_level*100), int(lamda*100))
+combine_jsons(path=pth, out_fname=o_dir_json+".json", pattern=pttern)
+json_to_csv(path=pth, out_fname=o_dir_csv+".csv", pattern=pttern)
