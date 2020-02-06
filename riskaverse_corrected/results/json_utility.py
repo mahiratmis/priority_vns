@@ -35,7 +35,7 @@ def combine_jsons(out_fname="db_results_combined.json", path=".", pattern="*.jso
         outfile.write('[{}]'.format(','.join([open(f, "r").read() for f in files_with_extension(path, pattern)])))
 
 # json to csv
-lamda = 0.5 #test 0, 0.5, 1
+lamda = 1 #test 0, 0.5, 1
 var_level = 0.05
 
 ## vns no db
@@ -47,7 +47,9 @@ var_level = 0.05
 #pttern = "vns_db*.json"
 
 # seperate
-o_fname = "combined_vns_db_v{}_l{}_priority_simopt_riskaverse".format(int(var_level*100), int(lamda*100))
-pttern = "vns_db_v{}_l{}*.json".format(int(var_level*100), int(lamda*100))
+#o_fname = "combined_vns_db_v{}_l{}_priority_simopt_riskaverse".format(int(var_level*100), int(lamda*100))
+#pttern = "vns_db_v{}_l{}*.json".format(int(var_level*100), int(lamda*100))
+o_fname = "combined_vns_nodb_v{}_l{}_priority_simopt_riskaverse".format(int(var_level*100), int(lamda*100))
+pttern = "vns_nodb_v{}_l{}*.json".format(int(var_level*100), int(lamda*100))
 combine_jsons(out_fname=o_fname+".json", pattern=pttern)
 json_to_csv(out_fname=o_fname+".csv", pattern=pttern)
