@@ -37,22 +37,6 @@ creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 
-
-def population_fitness(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, f, population, ch_i):
-    min_tc = float('inf') 
-    numSKUs = len(failure_rates)
-    initial_priority = list(np.random.choice(np.arange(1, numSKUs+1), numSKUs))
-    for j, ch_j in enumerate(population):
-        print(ch_i)
-        ngf = [ngfs[i] for i in ch_j]
-        tc_j, _, _ = solve_parallel_rvns_v2(cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost) 
-        if tc_j < min_tc:
-            min_tc = tc_j
-    ngf = [ngfs[i] for i in ch_i]
-    tc_i, _, _ = solve_parallel_rvns_v2(cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-    return max(0, f * min_tc - tc_i)
-
-
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
     '''
     returns number of servers and total cost for allocating
@@ -162,6 +146,7 @@ def prune_and_evaluate_parallel(q, l, cache, priority, failure_rates, service_ra
             q.put((priority, TotalCost))
         l.release()
 
+
 def Fitness(cache, FailureRates, ServiceRates, holding_costs, penalty_cost, skillCost, machineCost, priority ):
     '''
     input: -Individual representing clustering scheme
@@ -270,11 +255,15 @@ def ns_mutate_random2(q, x, min_cluster, max_cluster):
     q.put(x_new) #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random2(x, min_cluster, max_cluster)
 
 
-def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost ):
+def solve_parallel_rvns_v2( cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, ngf, initial_priority=None ):
     """Finds best solution x given an initial solution x,
        list shaking functions ngf, and
     """
-    x = initial_priority 
+    if initial_priority is None:
+        numSKUs = len(failure_rates)
+        x = list(np.random.choice(np.arange(1, numSKUs+1), numSKUs))
+    else:
+        x = initial_priority
     tcost_x = prune_and_evaluate(cache, x, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     iter_since_last_best = 0
     same_consecutive_count = 0
@@ -282,22 +271,26 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
     q = multiprocessing.Queue()
     q2 = multiprocessing.Queue()
     lck = multiprocessing.Lock()
-    print("x", x)
+    # print("x", x, "ngf", ngf)
+    k = len(ngf)
     while(iter_since_last_best < MAX_ISLB and same_consecutive_count < MAX_SCC):
+        process_ngf_id = 0
         better_found = False
         local_better_found = True
-        while local_better_found:
+        while local_better_found or process_ngf_id < k:
             local_better_found = False
             processes = []
             # half from first neighborhood
             for _ in range(n_cores//2):
-                p = multiprocessing.Process(target=ngf[0],
+                p = multiprocessing.Process(target=ngf[process_ngf_id],
                                                        args=(q, x, min_cluster, max_cluster))
                 processes.append(p)
                 p.start()
             # half from other neighborhood
+            if process_ngf_id < k-1:
+                process_ngf_id += 1
             for _ in range(n_cores//2):
-                p = multiprocessing.Process(target=ngf[1],
+                p = multiprocessing.Process(target=ngf[process_ngf_id],
                                                        args=(q, x, min_cluster, max_cluster))
                 processes.append(p)
                 p.start()
@@ -311,7 +304,7 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
             while not q.empty():
                 x_list.append(q.get())
             
-            print("x_list", x_list)
+            # print("x_list", x_list)
             # calculate total costs
             processes2 = []
             for x_prime in x_list:
@@ -328,16 +321,19 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
             x_tc_list = []
             while not q2.empty():
                 x_tc_list.append(q2.get())
-            print("x_tc_list", x_tc_list)
+            # print("x_tc_list", x_tc_list)
             # find min cost and priority
             min_x_prime, min_tcost = min(x_tc_list, key = lambda t : t[1])
 
+
+            process_ngf_id += 1
             if min_tcost <= tcost_x:
-                print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(min_tcost, iter_since_last_best))
+                # print("=== NEW lower total cost: {:.4f}, iter_slb:{}".format(min_tcost, iter_since_last_best))
                 x = min_x_prime
                 tcost_x = min_tcost
                 better_found = True
                 local_better_found = True
+                process_ngf_id = 0  # start from the first neighborhood
                 if prev_best == min_tcost :
                     same_consecutive_count += 1
                 else:
@@ -349,7 +345,12 @@ def solve_parallel_rvns_v2( cache, initial_priority, ngf, min_cluster, max_clust
             iter_since_last_best += 1
         else:
             iter_since_last_best = 0
-    return tcost_x, x, cache
+    return tcost_x , x, cache
+
+
+def NGF_Fitness(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, ngf, initial_priority=None ):
+    t_cost, _, _ = solve_parallel_rvns_v2(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, ngf, initial_priority)
+    return (t_cost,)
 
 
 def swicthGen(numPriorityClass,  n, priority):
@@ -368,6 +369,40 @@ def swicthGen(numPriorityClass,  n, priority):
         numbers = [x for x in range(1,numPriorityClass+1) if x != ex_priority_number]
         priority_new[idx2] = random.choice(numbers)
     return creator.Individual(priority_new)
+
+
+"""
+pop_max_fitness_vals={}
+def population_fitness(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, f, g, population, ch_i):
+    best_tc = float('-inf') 
+    numSKUs = len(failure_rates)
+    print(g)
+    # if max val of this generation is computed dont recalculate
+    if g in pop_max_fitness_vals:
+        best_tc = pop_max_fitness_vals[g]
+    else:
+        for j, ch_j in enumerate(population):
+            ngf = [ngfs[i] for i in set(ch_j)]
+            print(j, ngf)
+            initial_priority = list(np.random.choice(np.arange(1, numSKUs+1), numSKUs))
+            tc_j, _, _ = solve_parallel_rvns_v2(cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost) 
+            print(tc_j)
+            if tc_j > best_tc:
+                best_tc = tc_j
+        pop_max_fitness_vals[g] = best_tc
+        
+    # calculate total cst for ch_i
+    ngf = [ngfs[i] for i in set(ch_i)]
+    initial_priority = list(np.random.choice(np.arange(1, numSKUs+1), numSKUs))
+    tc_i, _, _ = solve_parallel_rvns_v2(cache, initial_priority, ngf, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    print("Tci",tc_i, "Best TC", best_tc, "Res", max(0, f * best_tc - tc_i))
+    return max(0, f * best_tc - tc_i)
+
+def parent_selection_prob(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, f, population, ch_i):
+    sum_pop = sum([population_fitness(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, f, population, ch_j) for ch_j in population])
+    f_ci = population_fitness(cache, min_cluster, max_cluster, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, f, population, ch_i)
+    return f_ci / sum_pop
+"""
 
 
 def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, numPriorityClass=1): 
@@ -391,66 +426,90 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
     toolbox.register("individual", generatePriority, len(failure_rates), numPriorityClass)
     # define the population to be a list of individuals
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-
-
-    #----------
-    # Operator registration
-    #----------
     # register the goal / fitness function
     toolbox.register("evaluate", Fitness, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-    
-    # register the crossover operators
-
     # operator for selecting individuals for breeding the next
     # generation: each individual of the current generation
     # is replaced by the 'fittest' (best) of three individuals
     # drawn randomly from the current generation.
     toolbox.register("select", tools.selTournament, tournsize=10)
 
-
-    f = 0.9
+    # hybrid vns ga setup     
     toolbox2 = base.Toolbox()
+    #function to generate individuals and individual length
     toolbox2.register("individual", generateNGFS, len(ngfs))
     toolbox2.register("population", tools.initRepeat, list, toolbox2.individual)
-    toolbox2.register("evaluate", population_fitness, cache, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, f)
+    toolbox2.register("evaluate", NGF_Fitness, cache, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
     toolbox2.register("mate", tools.cxOnePoint)
     toolbox2.register("mutate", swicthGen, len(ngfs), 1)  #1=num gen mutate
     toolbox2.register("select", tools.selTournament, tournsize=10)
-    X1 = toolbox2.population(2)
-    # Evaluate the entire population
-    fitnesses = [toolbox2.evaluate(X1, ch_i) for ch_i in X1]
-    for ind, fit in zip(X1, fitnesses):
+    start = time.time()   
+    # initial population of n individuals
+    Xg = toolbox2.population(n=3)
+    # MUTPB is the probability for mutating an individual
+    CXPB, MUTPB = 0.8, 0.4
+    # Evaluate entire population fitness
+    fitnesses = [toolbox2.evaluate([ngfs[i] for i in set(ngf)]) for ngf in Xg]
+    for ind, fit in zip(Xg, fitnesses):
         ind.fitness.values = fit
 
-    # Extracting all the fitnesses of 
-    fits = [ind.fitness.values[0] for ind in pop]
-    print fits
-    exit(0)
-
-
-
-
-    #----------
-
-    # random.seed(64)
-
-    # create an initial population of 50 individuals (where
-    # each individual is a list of integers)
-    start_time = time.time() #start time
-    pop = toolbox.population(n=1)
-    # Evaluate the entire population
-    fitnesses = list(map(toolbox.evaluate, pop))
-    
-    for ind, fit in zip(pop, fitnesses):
-        ind.fitness.values = fit
-    
-    # Extracting all the fitnesses of 
-    fits = [ind.fitness.values[0] for ind in pop]
-    best_cost=min(fits)
-    best_priority=tools.selBest(pop, 1)[0]
+    # # Extract fitnesses values 
+    fits = [ind.fitness.values[0] for ind in Xg]
     # Variable keeping track of the number of generations
-    best_cost, best_priority, cache = solve_parallel_rvns_v2(cache, best_priority, ngfs, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
+    gen_max = 2
+    # Begin the evolution
+    record_of_min=[]
+    best_cost_record=[]
+    best_cost=min(fits)
+    best_ngf=list(set(tools.selBest(Xg, 1)[0]))
+    print("Initial Best cost", best_cost, "Best ngf", best_ngf)
+    for g in range(1, gen_max+1):
+        print ("generation: ", g)
+        
+        # Select the next generation individuals
+        offspring = toolbox2.select(Xg, len(Xg))
+        # Clone the selected individuals
+        offspring = list(map(toolbox2.clone, offspring))
+    
+        # Apply crossover and mutation on the offspring
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            # cross two individuals with probability CXPB
+            if random.random() < CXPB:
+                toolbox2.mate(child1, child2)
+                # fitness values of the children
+                # must be recalculated later
+                del child1.fitness.values
+                del child2.fitness.values
+
+        for mutant in offspring:
+            # mutate an individual with probability MUTPB
+            if random.random() < MUTPB:
+                mutant=toolbox2.mutate(mutant)
+                del mutant.fitness.values
+    
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = [toolbox2.evaluate([ngfs[i] for i in set(ngf)]) for ngf in Xg]
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+        
+        # The population is entirely replaced by the offspring
+        Xg[:] = offspring
+        
+        # Gather all the fitnesses in one list and print the stats
+        fits = [ind.fitness.values[0] for ind in Xg]
+        record_of_min.append(min(fits)) #record min found in each iteration
+        
+        if min(fits)< best_cost:
+            best_cost=min(fits)
+        
+        best_cost_record.append(best_cost) #record of the best found so far
+    
+    best_ngf = tools.selBest(Xg, 1)[0]
+    best_ngf = [ngfs[i] for i in set(ngf)]
+    print("Best cost of GA best neighbor ", best_cost, best_ngf)
+    best_briority = []
+    best_cost, best_priority,cache = solve_parallel_rvns_v2(cache, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, best_ngf)
     stop_time = time.time() - start_time
     
     return best_cost, best_priority, stop_time, cache
