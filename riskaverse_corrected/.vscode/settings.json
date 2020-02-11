@@ -2,5 +2,8 @@
     "python.pythonPath": "/home/atmis/anaconda3/envs/p27/bin/python",
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.linting.enabled": false
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=180"
+    ],
 }
