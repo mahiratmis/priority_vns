@@ -233,7 +233,7 @@ def ns_mutate_random(q, x, min_cluster, max_cluster):
     n_skus = len(x_new)
     idx = random.randint(0, n_skus-1)
     ex_cluster_number = x[idx]
-    numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster))
+    numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster+1))
     x_new[idx] = random.choice(numbers)
     q.put(x_new) #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random(x, min_cluster, max_cluster)
 
@@ -246,10 +246,10 @@ def ns_mutate_random2(q, x, min_cluster, max_cluster):
     n_skus = len(x_new)
     idx1, idx2 = random.sample(range(0, n_skus), 2)
     ex_cluster_number = x[idx1]
-    numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster))
+    numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster+1))
     x_new[idx1] = random.choice(numbers)
     ex_cluster_number = x[idx2]
-    numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster))
+    numbers = list(range(min_cluster, ex_cluster_number)) + list(range(ex_cluster_number + 1, max_cluster+1))
     x_new[idx2] = random.choice(numbers)
     
     q.put(x_new) #if filter_out_symmetric_solutions([x_new]) else ns_mutate_random2(x, min_cluster, max_cluster)
