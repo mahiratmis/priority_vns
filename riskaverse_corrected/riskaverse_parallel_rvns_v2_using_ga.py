@@ -19,7 +19,7 @@ np.random.seed(60)
 lamda = 0.5  # test 0, 0.5, 1
 var_level = 0.05
 case_start, case_end = 1, 4
-prefix = "vns_parallel_using_ga_db_v{}_l{}_p{}_{}_".format(int(var_level*100), 
+prefix = "hybrid_parallel_vns_ga_db_v{}_l{}_p{}_{}_".format(int(var_level*100), 
                                                           int(lamda*100), 
                                                           case_start, 
                                                           case_end)
@@ -443,7 +443,7 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
     toolbox2.register("mate", tools.cxOnePoint)
     toolbox2.register("mutate", swicthGen, len(ngfs), 1)  #1=num gen mutate
     toolbox2.register("select", tools.selTournament, tournsize=10)
-    start = time.time()   
+    start_time = time.time()   
     # initial population of n individuals
     Xg = toolbox2.population(n=3)
     # MUTPB is the probability for mutating an individual
@@ -511,6 +511,7 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs, penalty_cos
     best_briority = []
     best_cost, best_priority,cache = solve_parallel_rvns_v2(cache, 2, len(failure_rates), failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost, best_ngf)
     stop_time = time.time() - start_time
+    print(best_cost, best_priority, "time", stop_time)
     
     return best_cost, best_priority, stop_time, cache
 

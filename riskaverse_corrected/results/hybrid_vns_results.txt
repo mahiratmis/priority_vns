@@ -1,0 +1,35 @@
+'Initial Best cost', 560388.3667040408, 'Best ngf', [0, 1, 2, 3, 5])
+('generation: ', 1)
+('generation: ', 2)
+('Best cost of GA best neighbor ', 554897.0685187485, [<function ns_mutate_random at 0x7fea23bb4320>, <function ns_mutate_random2 at 0x7fea23bb4398>, <function ns_shuffle at 0x7fea23bb42a8>, <function ns_two_way_swap at 0x7fea23bb4230>, <function ns_center_inverse_mutation at 0x7fea23bb41b8>])
+(620998.5604206127, [20, 7, 7, 17, 4, 1, 13, 20, 11, 9, 2, 3, 11, 8, 19, 3, 14, 6, 8, 1], 'time', 7248.130326032639)
+Best Cost 620998.5604206127
+Best Priority [20, 7, 7, 17, 4, 1, 13, 20, 11, 9, 2, 3, 11, 8, 19, 3, 14, 6, 8, 1]
+Case: 0022 run completed
+running VNS for  Case: 0023
+('Initial Best cost', 868411.6482821193, 'Best ngf', [0, 1, 3, 4, 5])
+('generation: ', 1)
+('generation: ', 2)
+('Best cost of GA best neighbor ', 861919.4373224655, [<function ns_mutate_random at 0x7fea23bb4320>, <function ns_mutate_random2 at 0x7fea23bb4398>, <function ns_two_way_swap at 0x7fea23bb4230>, <function ns_throas_mutation at 0x7fea23bb4140>, <function ns_center_inverse_mutation at 0x7fea23bb41b8>])
+(869055.8201033616, [3, 8, 9, 6, 8, 2, 3, 2, 1, 5], 'time', 4611.4272129535675)
+Best Cost 869055.8201033616
+Best Priority [3, 8, 9, 6, 8, 2, 3, 2, 1, 5]
+Case: 0023 run completed
+running VNS for  Case: 0029
+('Initial Best cost', 525136.9548747842, 'Best ngf', [0, 1, 2, 3, 5])
+('generation: ', 1)
+('generation: ', 2)
+('Best cost of GA best neighbor ', 525136.9548747842, [<function ns_mutate_random at 0x7fea23bb4320>, <function ns_mutate_random2 at 0x7fea23bb4398>, <function ns_shuffle at 0x7fea23bb42a8>, <function ns_two_way_swap at 0x7fea23bb4230>, <function ns_center_inverse_mutation at 0x7fea23bb41b8>])
+(549309.7724346803, [9, 4, 8, 6, 4, 3, 7, 1, 5, 6], 'time', 4676.758240938187)
+Best Cost 549309.7724346803
+Best Priority [9, 4, 8, 6, 4, 3, 7, 1, 5, 6]
+Case: 0029 run completed
+running VNS for  Case: 0032
+('Initial Best cost', 907705.8068474882, 'Best ngf', [0, 1, 2, 5])
+('generation: ', 1)
+('generation: ', 2)
+('Best cost of GA best neighbor ', 907705.8068474882, [<function ns_mutate_random at 0x7fea23bb4320>, <function ns_mutate_random2 at 0x7fea23bb4398>, <function ns_shuffle at 0x7fea23bb42a8>, <function ns_center_inverse_mutation at 0x7fea23bb41b8>])
+(959993.4855091189, [15, 12, 8, 19, 17, 16, 2, 14, 10, 5, 1, 17, 12, 19, 20, 2, 7, 3, 13, 19], 'time', 4961.026301860809)
+Best Cost 959993.4855091189
+Best Priority [15, 12, 8, 19, 17, 16, 2, 14, 10, 5, 1, 17, 12, 19, 20, 2, 7, 3, 13, 19]
+Case: 0032 run completed
