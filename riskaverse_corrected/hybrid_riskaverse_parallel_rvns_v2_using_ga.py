@@ -246,7 +246,12 @@ def solve_parallel_rvns_v2(cache, min_cluster, max_cluster, failure_rates, servi
     """
     global global_best_cost
     global global_best_priority
-    ngf = [ngfs[i] for i in set(ngf)]  # indexes to functions
+    # remove dublicate function indices
+    ngf_temp = []
+    for i in ngf:
+        if i not in ngf_temp:  # indexes to functions
+            ngf_temp.append(ngfs[i])
+    ngf = ngf_temp
     if initial_priority is None:
         numSKUs = len(failure_rates)
         x = list(np.random.choice(np.arange(1, numSKUs+1), numSKUs))
@@ -372,31 +377,12 @@ def swicthGen(numNGFs,  n, individual):
 def VNS_Priority(cache, failure_rates, service_rates, holding_costs,
                  penalty_cost, skill_cost, machine_cost, numPriorityClass=1):
 
-    def generatePriority(numSKUs, numPriorityClass=1):
-        '''
-        -assing priority classes to each SKU randomly for a given number of priority class
-        -returns a np array
-        '''
-        return creator.Individual(np.random.choice(np.arange(1, numPriorityClass+1), numSKUs))
-
     def generateNGFS(numNGFs):
         '''
         -assing priority classes to each SKU randomly for a given number of priority class
         -returns a np array
         '''
         return creator.Individual(np.random.choice(np.arange(numNGFs), numNGFs))
-
-    toolbox = base.Toolbox()
-    toolbox.register("individual", generatePriority, len(failure_rates), numPriorityClass)
-    # define the population to be a list of individuals
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    # register the goal / fitness function
-    toolbox.register("evaluate", Fitness, cache, failure_rates, service_rates, holding_costs, penalty_cost, skill_cost, machine_cost)
-    # operator for selecting individuals for breeding the next
-    # generation: each individual of the current generation
-    # is replaced by the 'fittest' (best) of three individuals
-    # drawn randomly from the current generation.
-    toolbox.register("select", tools.selTournament, tournsize=10)
 
     # hybrid vns ga setup
     toolbox2 = base.Toolbox()
@@ -464,7 +450,7 @@ def VNS_Priority(cache, failure_rates, service_rates, holding_costs,
     best_ngf = tools.selBest(Xg, 1)[0]
     print("Best cost of GA best neighbor ", best_cost, best_ngf)
     stop_time = time.time() - start_time
-    print(best_cost, best_priority, "time", stop_time)
+    print(best_cost, global_best_priority, "time", stop_time)
     return global_best_cost, global_best_priority, stop_time, cache
 
 
