@@ -91,12 +91,10 @@ def population_generator2(failure_rates, service_rates, holding_costs, penalty_c
 
 json_case2 = []
 with open(input_fname, "r") as json_file2:
-    # json_file.readline()
     for line in json_file2:
         json_case2.append(json.loads(line))
 
 json_case2 = [item for sublist in json_case2[0] for item in sublist]
-
 df = pd.DataFrame.from_dict(json_case2)
 
 SPT = []

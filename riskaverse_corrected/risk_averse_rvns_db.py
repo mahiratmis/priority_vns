@@ -1,4 +1,4 @@
-#PRUNE and DATABASE available
+# PRUNE and DATABASE available
 import numpy as np
 import math
 import sys
@@ -13,7 +13,7 @@ from deap import base
 from deap import creator
 from deap import tools
 
-import simulation_codes  #Andre's package that used in simulation opt.
+import simulation_codes  # Andre's package that used in simulation opt.
 
 # cache statistics for database
 cache_hit = 0
@@ -23,23 +23,19 @@ cache_miss = 0
 random.seed(60)
 np.random.seed(60)
 
-lamda=0 #test 0, 0.5, 1
-var_level=0.05
-prefix = "vns_db_v{}_l{}_".format(int(var_level*100), int(lamda*100))  
+lamda = 0  # test 0, 0.5, 1
+var_level = 0.05
+prefix = "vns_db_v{}_l{}_".format(int(var_level*100), int(lamda*100))
 
 
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
-    
     '''
     returns number of servers and total cost for allocating
     that number of servers 
-    
     '''
-
     
     min_nserver=int(sum(np.array(FailureRates)/np.array(ServiceRates)))+1    #min required servers
     assignment=np.ones((min_nserver, len(FailureRates)))
-    
     holding_backorder_CostList =simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, FailureRates, ServiceRates,holding_costs, penalty_cost, assignment,priority,
                                   numberWarmingUpRequests = 5000,
                                   stopNrRequests = 100000,
