@@ -8,7 +8,15 @@ import simulation_codes  # Andre's package that used in simulation opt.
 lamda = 0.5  # test 0, 0.5, 1
 var_level = 0.05
 out_fname = "metadata_benchmark_rules_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
-input_fname = "results/combined_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
+# input_fname = "results/combined_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
+
+db_nodb = "db"
+pth = "results/" + db_nodb + "/combined/json/"
+dynamic_part = "_{}_v{}_l{}_".format(db_nodb,
+                                     int(var_level*100),
+                                     int(lamda*100))
+sub_pth = "/combined_vns" + dynamic_part + "priority_simopt_riskaverse.json"
+input_fname = pth + sub_pth
 
 
 def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
