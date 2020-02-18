@@ -320,7 +320,7 @@ def OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, margin
     #print S
 
     #print Prob_BO
-    return totalCost, S, EBO
+    return totalCost, np.sum(S*holdingCosts),   lamda*np.sum(penalty*EBO)+(1-lamda)*np.sum(penalty*np.array(S_riskaverse)), S, EBO
 
 # writeToDB = writeToDB1
 # getRecordFromDB = getRecordFromDB1
@@ -465,7 +465,9 @@ def simulation_optimization_bathrun_priority(failureRates, serviceRates, holding
                                   replications=replicationsDefault,
                                   stopNrRequests = stopNrRequestsDefault,
                                   numberWarmingUpRequests=0, maxQ=maxQueue):
-    totalCostList = []
+    totalCostList = []	
+    holdCostList=[]
+    backCostList=[]
 
     pool = mp.Pool(processes=nCores)
 
@@ -501,8 +503,10 @@ def simulation_optimization_bathrun_priority(failureRates, serviceRates, holding
                     if(n<maxQ):
                         numberInSystemDistributionArray[sk,n] += numberInSystemDistribution[sk][n]
 
-            totalCost, _, _ = OptimizeStockLevelsAndCostsSimBased(holdingCosts, penalty, numberInSystemDistributionArray)
+            totalCost, holdC, backorderC, _ ,_= OptimizeStockLevelsAndCostsSimBased(holdingCosts, penalty, numberInSystemDistributionArray)
             totalCostList.append(totalCost)
+	    holdCostList.append(holdC)
+            backCostList.append(BackorderC)
 
         #print "Runs are executed:", len(results)
         pool.close()
@@ -517,7 +521,7 @@ def simulation_optimization_bathrun_priority(failureRates, serviceRates, holding
     finally:
         pool.join()
 
-    return totalCostList
+    return totalCostList, holdCostList, backCostList
 
 
 def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failureRates, serviceRates, holdingCosts, penalty, skillServerAssignment,priority,
@@ -525,6 +529,8 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
                                   stopNrRequests = stopNrRequestsDefault,
                                   numberWarmingUpRequests=0, maxQ=maxQueue):
     totalCostList = []
+    holdCostList=[]
+    backorderCostList=[]
 
     pool = mp.Pool(processes=nCores)
 
@@ -560,8 +566,10 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
                     if(n<maxQ):
                         numberInSystemDistributionArray[sk,n] += numberInSystemDistribution[sk][n]
 
-            totalCost, _, _ = OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, numberInSystemDistributionArray, lamda, var_level)
+            totalCost, holdC, backorderC, _, _ = OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, numberInSystemDistributionArray, lamda, var_level)
             totalCostList.append(totalCost)
+            holdCostList.append(holdC)
+            backorderCostList.append(backorderC)
 
         #print "Runs are executed:", len(results)
         pool.close()
@@ -576,7 +584,7 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
     finally:
         pool.join()
 
-    return totalCostList
+    return totalCostList, holdCostList, backorderCostList
 
 def createDatabaseFromExistingJSON():
     file_path = "..//simulated_sets_version3.json"

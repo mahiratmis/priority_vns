@@ -27,17 +27,17 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
     min_nserver = int(sum(np.array(FailureRates)/np.array(ServiceRates)))+1    # min required servers
     Min_server = min_nserver
     assignment = np.ones((min_nserver, len(FailureRates)))
-    holding_backorder_CostList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda,
-                                                                                                                          var_level,
-                                                                                                                          FailureRates,
-                                                                                                                          ServiceRates,
-                                                                                                                          holding_costs,
-                                                                                                                          penalty_cost,
-                                                                                                                          assignment,
-                                                                                                                          priority,
-                                                                                                                          numberWarmingUpRequests=5000,
-                                                                                                                          stopNrRequests=100000,
-                                                                                                                          replications=40)
+    holding_backorder_CostList, holdList, backorderList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda,
+                                                                                                                                                   var_level,
+                                                                                                                                                   FailureRates,
+                                                                                                                                                   ServiceRates,
+                                                                                                                                                   holding_costs,
+                                                                                                                                                   penalty_cost,
+                                                                                                                                                   assignment,
+                                                                                                                                                   priority,
+                                                                                                                                                   numberWarmingUpRequests=5000,
+                                                                                                                                                   stopNrRequests=100000,
+                                                                                                                                                   replications=40)
     Server_Cost = min_nserver*machineCost
     TotalCost = np.mean(holding_backorder_CostList)+Server_Cost
     while True:
@@ -45,17 +45,17 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
         min_nserver += 1
         # print min_nserver
         assignment = np.ones((min_nserver, len(FailureRates)))
-        temp_holding_backorder_CostList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda,
-                                                                                                                                   var_level,
-                                                                                                                                   FailureRates,
-                                                                                                                                   ServiceRates,
-                                                                                                                                   holding_costs,
-                                                                                                                                   penalty_cost,
-                                                                                                                                   assignment,
-                                                                                                                                   priority,
-                                                                                                                                   numberWarmingUpRequests=5000,
-                                                                                                                                   stopNrRequests=100000,
-                                                                                                                                   replications=40)
+        temp_holding_backorder_CostList, temp_holdList, temp_backorderList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda,
+                                                                                                                                                                      var_level,
+                                                                                                                                                                      FailureRates,
+                                                                                                                                                                      ServiceRates,
+                                                                                                                                                                      holding_costs,
+                                                                                                                                                                      penalty_cost,
+                                                                                                                                                                      assignment,
+                                                                                                                                                                      priority,
+                                                                                                                                                                      numberWarmingUpRequests=5000,
+                                                                                                                                                                      stopNrRequests=100000,
+                                                                                                                                                                      replications=40)
         temp_Server_Cost = min_nserver*machineCost
         temp_TotalCost = np.mean(temp_holding_backorder_CostList)+temp_Server_Cost
         if temp_TotalCost > TotalCost:
@@ -64,7 +64,8 @@ def optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, p
         else:
             TotalCost = temp_TotalCost
             Server_Cost = temp_Server_Cost
-    return Min_server, min_nserver, TotalCost, Server_Cost, TotalCost-Server_Cost
+            holdList, backorderList = temp_holdList, temp_backorderList
+    return Min_server, min_nserver, TotalCost, Server_Cost, np.mean(holdList), np.mean(backorderList)
 
 
 def optimal_server_number2(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost):
@@ -75,20 +76,20 @@ def optimal_server_number2(priority, FailureRates, ServiceRates, holding_costs, 
     min_nserver = int(sum(np.array(FailureRates)/np.array(ServiceRates)))+1    # min required servers
     Min_server = min_nserver
     assignment = np.ones((min_nserver, len(FailureRates)))
-    holding_backorder_CostList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda,
-                                                                                                                          var_level,
-                                                                                                                          FailureRates,
-                                                                                                                          ServiceRates,
-                                                                                                                          holding_costs,
-                                                                                                                          penalty_cost,
-                                                                                                                          assignment,
-                                                                                                                          priority,
-                                                                                                                          numberWarmingUpRequests=5000,
-                                                                                                                          stopNrRequests=100000,
-                                                                                                                          replications=40)
+    holding_backorder_CostList, holdList, backorderList = simulation_codes.SimulationInterface.simulation_optimization_bathrun_priority_riskaverse(lamda,
+                                                                                                                                                   var_level,
+                                                                                                                                                   FailureRates,
+                                                                                                                                                   ServiceRates,
+                                                                                                                                                   holding_costs,
+                                                                                                                                                   penalty_cost,
+                                                                                                                                                   assignment,
+                                                                                                                                                   priority,
+                                                                                                                                                   numberWarmingUpRequests=5000,
+                                                                                                                                                   stopNrRequests=100000,
+                                                                                                                                                   replications=40)
     Server_Cost = min_nserver*machineCost
     TotalCost = np.mean(holding_backorder_CostList)+Server_Cost
-    return Min_server, min_nserver, TotalCost, Server_Cost, TotalCost-Server_Cost
+    return Min_server, min_nserver, TotalCost, Server_Cost, np.mean(holdList), np.mean(backorderList)
 
 
 json_case2 = []
@@ -114,7 +115,10 @@ df["num_assignment_class"] = df["global_best_priority"].map(lambda x:  len(x)/fl
 used_server = []
 min_server = []
 Server_cost = []
-EBH_cost = []
+H_cost = []
+BO_cost = []
+T_cost = []
+
 for i in range(len(df)):
     priority = np.array(df["global_best_priority"][i])
     FailureRates = np.array(df["FailureRates"][i])
@@ -123,17 +127,21 @@ for i in range(len(df)):
     penalty_cost = df["penalty_cost"][i]
     skill_cost = df["skillCost"][i]
     machineCost = df["machineCost"][i]
-    min_ser, used_ser, _, ser_cost, ebh_cost = optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
+    min_ser, used_ser, t_cost, ser_cost, h_cost, bo_cost = optimal_server_number(priority, FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
     used_server.append(used_ser)
     min_server.append(min_ser)
     Server_cost.append(ser_cost)
-    EBH_cost.append(ebh_cost)
+    H_cost.append(h_cost)
+    BO_cost.append(bo_cost)
+    T_cost.append(bo_cost)
 
 
 df["used_server"] = pd.Series(used_server)
 df["min_server"] = pd.Series(min_server)
 df["Server_cost"] = pd.Series(Server_cost)
-df["EBH_cost"] = pd.Series(EBH_cost)
+df["H_cost"] = pd.Series(H_cost)
+df["BO_cost"] = pd.Series(BO_cost)
+df["T_cost"] = pd.Series(BO_cost)
 
 
 # comparision with benchmark
@@ -199,16 +207,16 @@ for i in range(len(df)):
         machineCost = df["machineCost"][i]
 
         pop = population_generator2(FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
-        _, _, TotalCost, _, _ = optimal_server_number2(pop[0], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
+        _, _, TotalCost, _, _, _ = optimal_server_number2(pop[0], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
         FCFS.append(TotalCost)
 
-        _, _, TotalCost, _, _ = optimal_server_number2(pop[1], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
+        _, _, TotalCost, _, _, _ = optimal_server_number2(pop[1], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
         SPT.append(TotalCost)
 
-        _, _, TotalCost, _, _ = optimal_server_number2(pop[2], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
+        _, _, TotalCost, _, _, _ = optimal_server_number2(pop[2], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
         H_rule.append(TotalCost)
 
-        _, _, TotalCost, _, _ = optimal_server_number2(pop[3], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
+        _, _, TotalCost, _, _, _ = optimal_server_number2(pop[3], FailureRates, ServiceRates, holding_costs, penalty_cost, skill_cost, machineCost)
         HMU_rule.append(TotalCost)
 
     else:
