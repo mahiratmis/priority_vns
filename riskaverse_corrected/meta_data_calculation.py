@@ -11,7 +11,7 @@ out_fname = "metadata_benchmark_rules_vns_db_v{}_l{}_priority_simopt_riskaverse.
 # input_fname = "results/combined_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
 
 db_nodb = "db"
-pth = "results/" + db_nodb + "/combined/json/"
+pth = "results/" + db_nodb + "/combined/json"
 dynamic_part = "_{}_v{}_l{}_".format(db_nodb,
                                      int(var_level*100),
                                      int(lamda*100))
@@ -133,7 +133,7 @@ for i in range(len(df)):
     Server_cost.append(ser_cost)
     H_cost.append(h_cost)
     BO_cost.append(bo_cost)
-    T_cost.append(bo_cost)
+    T_cost.append(t_cost)
 
 
 df["used_server"] = pd.Series(used_server)
@@ -141,7 +141,7 @@ df["min_server"] = pd.Series(min_server)
 df["Server_cost"] = pd.Series(Server_cost)
 df["H_cost"] = pd.Series(H_cost)
 df["BO_cost"] = pd.Series(BO_cost)
-df["T_cost"] = pd.Series(BO_cost)
+df["T_cost"] = pd.Series(T_cost)
 
 
 # comparision with benchmark
