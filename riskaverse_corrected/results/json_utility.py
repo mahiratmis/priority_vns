@@ -58,9 +58,9 @@ def combine_jsons(out_fname="db_results_combined.json",
 
 
 # json to csv
-lamda = 1  # test 0, 0.5, 1
+lamda = 0  # test 0, 0.5, 1
 var_level = 0.05
-db_nodb = "db"
+db_nodb = "nodb"
 pth = "metadata"
 dynamic_part = "_{}_v{}_l{}_".format(db_nodb,
                                      int(var_level*100),
