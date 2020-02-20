@@ -58,14 +58,15 @@ def combine_jsons(out_fname="db_results_combined.json",
 
 
 # json to csv
-lamda = 0  # test 0, 0.5, 1
+lamda = 0.5  # test 0, 0.5, 1
 var_level = 0.05
 db_nodb = "nodb"
-pth = "metadata"
+pth = "ga"
 dynamic_part = "_{}_v{}_l{}_".format(db_nodb,
                                      int(var_level*100),
                                      int(lamda*100))
-sub_pth = "combined_vns" + dynamic_part + "priority_simopt_riskaverse"
+sub_pth = "combined_ga" + dynamic_part + "priority_simopt_riskaverse"
+# sub_pth = "combined_vns" + dynamic_part + "priority_simopt_riskaverse"
 
 o_dir_json = pth + "/combined/json/" + sub_pth
 o_dir_csv = pth + "/combined/csv/" + sub_pth
