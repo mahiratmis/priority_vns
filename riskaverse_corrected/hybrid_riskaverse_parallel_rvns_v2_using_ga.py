@@ -10,7 +10,7 @@ import multiprocessing
 import numpy as np
 # import psutil
 from simulation_codes.SimulationInterface import simulation_optimization_bathrun_priority_riskaverse as sobpr
-
+from datetime import datetime
 # reproducability
 random.seed(60)
 np.random.seed(60)
@@ -29,6 +29,18 @@ n_cores = 2
 
 MAX_ISLB = 1  # maximum iter_since_last_best default 100
 MAX_SCC = 1  # maximum same_consecutive_count default 10
+
+# print configuration
+print("==================== CONFIGURATION ==================== ")
+print("LAMDA:", lamda)
+print("VAR_LEVEL:", var_level)
+print("CASE_START:", case_start)
+print("CASE_END:", case_end)
+print("OUTPUT_FILE_PREFIX:", prefix)
+print("N_CORES:", n_cores)
+print("MAX_ISLB: {} MAX_SSC: {}".format(MAX_ISLB, MAX_SCC))
+print("Start Date and Time:", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+print("======================================================= \n")
 
 # 1 is for maximization -1 for minimization
 # Minimize total cost just EBO cost and holding cost at the moment

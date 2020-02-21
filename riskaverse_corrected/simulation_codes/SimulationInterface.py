@@ -586,6 +586,71 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
 
     return totalCostList, holdCostList, backorderCostList
 
+
+def simulation_optimization_bathrun_priority_riskaverse_extend(lamda, var_level, failureRates, serviceRates, holdingCosts, penalty, skillServerAssignment,priority,
+                                  replications=replicationsDefault,
+                                  stopNrRequests = stopNrRequestsDefault,
+                                  numberWarmingUpRequests=0, maxQ=maxQueue):
+    totalCostList = []
+    holdCostList=[]
+    backorderCostList=[]
+
+    pool = mp.Pool(processes=nCores)
+
+    requestArrivalRateInput = np.sum(failureRates)
+    skillDistributionInput = np.cumsum(failureRates/requestArrivalRateInput)
+    # skillServerCosts = np.ones(skillServerAssignment.shape)
+
+    skillServerRates = np.transpose(np.zeros(skillServerAssignment.shape))
+    for i in xrange(serviceRates.shape[0]): skillServerRates[i,:] = skillServerAssignment[:,i] * serviceRates[i]
+    skillServerRates = np.transpose(skillServerRates)
+    skillServerCosts = np.array(skillServerRates)*np.array(priority) #
+
+    startSeed = 50
+    try:
+        results = [pool.apply_async(simulation,
+                     args=(requestArrivalRateInput,
+                        skillDistributionInput,  #The distribution should be in cummulative form
+                        skillServerRates, ##replenishment times can be different for different priority classes
+                        skillServerCosts,
+                        [],
+                        stopNrRequests,
+                        numberWarmingUpRequests,
+                        startSeed+20*i,
+                        ) )
+            for i in xrange(replications)]
+
+        for p in results:
+            numberInSystemDistribution = p.get()[0]
+
+            numberInSystemDistributionArray = np.zeros((len(failureRates), maxQueue))
+            for sk in numberInSystemDistribution:
+                for n in numberInSystemDistribution[sk]:
+                    if(n<maxQ):
+                        numberInSystemDistributionArray[sk,n] += numberInSystemDistribution[sk][n]
+
+            totalCost, holdC, backorderC, _, _ = OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, numberInSystemDistributionArray, lamda, var_level)
+            totalCostList.append(totalCost)
+            holdCostList.append(holdC)
+            backorderCostList.append(backorderC)
+
+        #print "Runs are executed:", len(results)
+        pool.close()
+    except KeyboardInterrupt:
+        print 'got ^C while pool mapping, terminating the pool'
+        pool.terminate()
+        print 'pool is terminated'
+    except Exception, e:
+        print 'got exception: %r, terminating the pool' % (e,)
+        pool.terminate()
+        print 'pool is terminated'
+    finally:
+        pool.join()
+
+    return totalCostList, holdCostList, backorderCostList
+
+
+
 def createDatabaseFromExistingJSON():
     file_path = "..//simulated_sets_version3.json"
 
