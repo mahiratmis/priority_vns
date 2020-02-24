@@ -5,17 +5,19 @@ import pandas as pd
 import simulation_codes  # Andre's package that used in simulation opt.
 
 
-lamda = 0.5  # test 0, 0.5, 1
+lamda = 0  # test 0, 0.5, 1
 var_level = 0.05
-out_fname = "metadata_benchmark_rules_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
+alg = "ga"  # ga or vns
+db_nodb = "nodb"
+out_fname = "metadata_benchmark_rules_{}_{}_v{}_l{}_priority_simopt_riskaverse.json".format(alg, db_nodb, int(var_level*100), int(lamda*100))
 # input_fname = "results/combined_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
 
-db_nodb = "db"
-pth = "results/" + db_nodb + "/combined/json"
+pth = "results/" + alg + "/combined/json"
+# pth = "results/" + db_nodb + "/combined/json"
 dynamic_part = "_{}_v{}_l{}_".format(db_nodb,
                                      int(var_level*100),
                                      int(lamda*100))
-sub_pth = "/combined_vns" + dynamic_part + "priority_simopt_riskaverse.json"
+sub_pth = "/combined_" + alg + dynamic_part + "priority_simopt_riskaverse.json"
 input_fname = pth + sub_pth
 
 
@@ -101,8 +103,8 @@ with open(input_fname, "r") as json_file2:
 json_case2 = [item for sublist in json_case2[0] for item in sublist]
 df = pd.DataFrame.from_dict(json_case2)
 
-df['global_best_cost'] = df['VNS_best_cost']
-df['global_best_priority'] = df['VNS_best_priority']
+df['global_best_cost'] = df['GA_best_cost'] if alg == "ga" else df['VNS_best_cost']
+df['global_best_priority'] = df['GA_best_priority'] if alg == "ga" else df['VNS_best_priority']
 df['global_best_cost'] = df['global_best_cost'].map(lambda x:  x[0] if type(x) == list else x)
 # analysis number of priority classes
 # Add new column to the dataframe

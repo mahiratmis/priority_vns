@@ -310,6 +310,10 @@ for case in json_case[0]:
                         
                         
                 ###inputs
+                GA_SimOpt["CaseID"]=case["caseID"]
+                GA_SimOpt["FailureRates"]=FailureRates.tolist()
+                GA_SimOpt["ServiceRates"]=ServiceRates.tolist()
+                GA_SimOpt["holding_costs"]=holding_costs.tolist()
                 GA_SimOpt["penalty_cost"]=penalty_cost  
                 GA_SimOpt["skillCost"]=skillCost
                 GA_SimOpt["machineCost"]=machineCost
