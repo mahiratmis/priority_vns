@@ -44,6 +44,7 @@ for case in json_case[0]:
                 GA_SimOpt["FailureRates"] = FailureRates.tolist()
                 GA_SimOpt["ServiceRates"] = ServiceRates.tolist()
                 GA_SimOpt["holding_costs"] = holding_costs.tolist()
+                print "======= LENNN: ", len(FailureRates)
                 print ',"CaseID" : "{}", "FailureRates" : {}, "ServiceRates" : {}, "holding_costs" : {}'.format(case["caseID"],
                                                                                                      FailureRates.tolist(),
                                                                                                      ServiceRates.tolist(),

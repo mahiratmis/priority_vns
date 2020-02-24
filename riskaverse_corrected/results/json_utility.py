@@ -56,9 +56,19 @@ def combine_jsons(out_fname="db_results_combined.json",
                               )
                       )
 
+def strip_newlines_in_json(path=".", pattern="*.json"):
+    # combine json files in current folder
+    for f in files_with_extension(path, pattern):
+        json_block = ''.join([line for line in open(f, 'r')])
+        json_content = json.loads(json_block)
+        with open(f, 'w') as fout:
+            json.dump(json_content, fout)
+
+# strip_newlines_in_json(path="ga")
+# exit(0)
 
 # json to csv
-lamda = 1  # test 0, 0.5, 1
+lamda = 0  # test 0, 0.5, 1
 var_level = 0.05
 db_nodb = "nodb"
 pth = "ga"
