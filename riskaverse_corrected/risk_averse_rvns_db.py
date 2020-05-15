@@ -341,11 +341,12 @@ Results=[]
 tot_cases = 0
 size_multipliers = [3, 5]
 for case in json_case[0]:
-    for size_multiplier in size_multipliers:
+    for smi, size_multiplier in enumerate(size_multipliers):
         if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
             if case['simulationGAresults']['skill_cost_factor']==0.1:
                 if case['simulationGAresults']['utilization_rate'] ==0.8:
-                    tot_cases += 1 
+                    if smi is 0:    
+                        tot_cases += 1  
                     if tot_cases<start or tot_cases>end:
                         continue           
                     FailureRates=np.array(case['simulationGAresults']["failure_rates"])
