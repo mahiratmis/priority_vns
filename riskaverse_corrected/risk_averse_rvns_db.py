@@ -349,9 +349,9 @@ for case in json_case[0]:
                         tot_cases += 1  
                     if tot_cases<start or tot_cases>end:
                         continue           
-                    FailureRates=np.array(case['simulationGAresults']["failure_rates"])
-                    ServiceRates=np.array(case['simulationGAresults']["service_rates"])
-                    holding_costs=np.array(case['simulationGAresults']["holding_costs"])
+                    FailureRates=np.array(size_multiplier*case['simulationGAresults']["failure_rates"])
+                    ServiceRates=np.array(size_multiplier*case['simulationGAresults']["service_rates"])
+                    holding_costs=np.array(size_multiplier*case['simulationGAresults']["holding_costs"])
                     penalty_cost=case['simulationGAresults']["penalty_cost"]
                     skillCost=100 #NOT USING THIS ATM
                     machineCost=case['simulationGAresults']['machine_cost']
