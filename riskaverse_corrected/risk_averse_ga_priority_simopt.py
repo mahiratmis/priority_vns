@@ -276,64 +276,56 @@ with open("GAPoolingAll_4a.json", "r") as json_file:
         
 
 #################INTEGRATING pruning and cache TO GA#####################################
-tot_cases = 0
 Results=[]
-size_multipliers = [3, 5]
-for case in json_case[0]:
-    for smi, size_multiplier in enumerate(size_multipliers):
-         if len(case['simulationGAresults']["failure_rates"]) == 10:
-            if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
-                if case['simulationGAresults']['skill_cost_factor']==0.1:       
-                    if smi is 0:    
-                        tot_cases += 1 
-                    if tot_cases<start or tot_cases>end:
-                        continue         
-                    FailureRates=np.array(size_multiplier*case['simulationGAresults']["failure_rates"])
-                    ServiceRates=np.array(size_multiplier*case['simulationGAresults']["service_rates"])
-                    holding_costs=np.array(size_multiplier*case['simulationGAresults']["holding_costs"])
-                    penalty_cost=case['simulationGAresults']["penalty_cost"]
-                    skillCost=100 #NOT USING THIS ATM
-                    machineCost=case['simulationGAresults']['machine_cost']
-                    print("nSKU",len(FailureRates))   
+size_multipliers = [1,2,3,4,5]
+for case in json_case[0][:1]:
+    for size_multiplier in size_multipliers:       
+        FailureRates=np.array(size_multiplier*case['simulationGAresults']["failure_rates"])
+        ServiceRates=np.array(size_multiplier*case['simulationGAresults']["service_rates"])
+        holding_costs=np.array(size_multiplier*case['simulationGAresults']["holding_costs"])
+        penalty_cost=case['simulationGAresults']["penalty_cost"]
+        skillCost=100 #NOT USING THIS ATM
+        machineCost=case['simulationGAresults']['machine_cost']
+        print("nSKU: ",len(FailureRates))    
                                         
-                    GA_SimOpt={}
-                    numPriorityClass=len(FailureRates) #making equal to number of SKUs
-                            
-                    ##############GA RUN############
-                    print "running GA for", case["caseID"]
-                    cache={}
-                    best_cost, best_priority, run_time,  best_cost_record, record_of_min, _,_            =GA_Priority(FailureRates, ServiceRates,                                                       holding_costs, penalty_cost,                                                       skillCost, machineCost, numPriorityClass) 
-                    print best_cost, best_priority
-                            
-
-                    ####################RECORDING RESULTS##################
-                    ###GA Outputs
-                    GA_SimOpt["GA_best_cost"]=best_cost[0]
-                    GA_SimOpt["GA_best_priority"]=best_priority
-                    GA_SimOpt["GA_run_time"]=run_time
-                    GA_SimOpt["best_cost_record"]=best_cost_record
-                    GA_SimOpt["record_of_min"]=record_of_min
-                            
-                            
-                    ###inputs
-                    GA_SimOpt["CaseID"]=case["caseID"]
-                    GA_SimOpt["FailureRates"]=FailureRates.tolist()
-                    GA_SimOpt["ServiceRates"]=ServiceRates.tolist()
-                    GA_SimOpt["holding_costs"]=holding_costs.tolist()
-                    GA_SimOpt["penalty_cost"]=penalty_cost  
-                    GA_SimOpt["skillCost"]=skillCost
-                    GA_SimOpt["machineCost"]=machineCost
-                    GA_SimOpt["num_SKU"]=len(FailureRates)
-                    GA_SimOpt["utilization_rate"]= case['simulationGAresults']['utilization_rate']
-                    GA_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
-                    #####
+        GA_SimOpt={}
+        numPriorityClass=len(FailureRates) #making equal to number of SKUs
                 
-                    ### risk averse parameter
-                    GA_SimOpt["var_level"]= var_level
-                    GA_SimOpt["lamda"]= lamda
+        ##############GA RUN############
+        print "running GA for", case["caseID"]
+        cache={}
+        best_cost, best_priority, run_time,  best_cost_record, record_of_min, _,_            =GA_Priority(FailureRates, ServiceRates,                                                       holding_costs, penalty_cost,                                                       skillCost, machineCost, numPriorityClass) 
+        print best_cost, best_priority
+                
 
-                    Results.append(GA_SimOpt)
-                    print case["caseID"], "run completed"
+        ####################RECORDING RESULTS##################
+        ###GA Outputs
+        GA_SimOpt["GA_best_cost"]=best_cost[0]
+        GA_SimOpt["GA_best_priority"]=best_priority
+        GA_SimOpt["GA_run_time"]=run_time
+        GA_SimOpt["best_cost_record"]=best_cost_record
+        GA_SimOpt["record_of_min"]=record_of_min
+                
+                
+        ###inputs
+        GA_SimOpt["CaseID"]=case["caseID"]
+        GA_SimOpt["FailureRates"]=FailureRates.tolist()
+        GA_SimOpt["ServiceRates"]=ServiceRates.tolist()
+        GA_SimOpt["holding_costs"]=holding_costs.tolist()
+        GA_SimOpt["penalty_cost"]=penalty_cost  
+        GA_SimOpt["skillCost"]=skillCost
+        GA_SimOpt["machineCost"]=machineCost
+        GA_SimOpt["num_SKU"]=len(FailureRates)
+        GA_SimOpt["utilization_rate"]= case['simulationGAresults']['utilization_rate']
+        GA_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
+        #####
+    
+        ### risk averse parameter
+        GA_SimOpt["var_level"]= var_level
+        GA_SimOpt["lamda"]= lamda
+
+        Results.append(GA_SimOpt)
+        print case["caseID"], "run completed"
                 
                 
 #analysis number of priority classes

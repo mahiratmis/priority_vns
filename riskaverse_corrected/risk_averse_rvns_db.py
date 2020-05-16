@@ -25,7 +25,7 @@ np.random.seed(60)
 
 lamda = 0  # test 0, 0.5, 1
 var_level = 0.05
-start, end = 1, 3
+start, end = 1, 1
 prefix = "vns_db_v{}_l{}_p{}_{}_".format(int(var_level*100), int(lamda*100), start, end)
 
 
@@ -338,65 +338,57 @@ nsf = [nsf[i] for i in indices]
 #################INTEGRATING pruning and cache TO GA#####################################
 
 Results=[]
-tot_cases = 0
-size_multipliers = [3, 5]
-for case in json_case[0]:
-    for smi, size_multiplier in enumerate(size_multipliers):
-        if len(case['simulationGAresults']["failure_rates"]) == 10:
-            if case['simulationGAresults']['holding_costs_variant']==2: #HPB cost variant
-                if case['simulationGAresults']['skill_cost_factor']==0.1:        
-                    if smi is 0:    
-                        tot_cases += 1 
-                    if tot_cases<start or tot_cases>end:
-                        continue         
-                    FailureRates=np.array(size_multiplier*case['simulationGAresults']["failure_rates"])
-                    ServiceRates=np.array(size_multiplier*case['simulationGAresults']["service_rates"])
-                    holding_costs=np.array(size_multiplier*case['simulationGAresults']["holding_costs"])
-                    penalty_cost=case['simulationGAresults']["penalty_cost"]
-                    skillCost=100 #NOT USING THIS ATM
-                    machineCost=case['simulationGAresults']['machine_cost']
-                    print("nSKU",len(FailureRates))   
-                    VNS_SimOpt={}
-                    numPriorityClass=len(FailureRates) #making equal to number of SKUs
-                            
-                    ##############VNS RUN############
-                    print "running VNS for ", case["caseID"]
-                    cache={}
-                    best_cost, best_priority, run_time, cache  =VNS_Priority(cache, FailureRates, ServiceRates,holding_costs, penalty_cost,skillCost, machineCost, numPriorityClass) 
-                            
-                    print "Best Cost", best_cost
-                    print "Best Priority", best_priority
-                            
-                            
-                    ####################RECORDING RESULTS##################
-                    ###VNS Outputs
-                    VNS_SimOpt["VNS_best_cost"]=best_cost
-                    VNS_SimOpt["VNS_best_priority"]=best_priority
-                    VNS_SimOpt["VNS_run_time"]=run_time
-                            
-                            
-                    ###inputs
-                    VNS_SimOpt["CaseID"]=case["caseID"]
-                    VNS_SimOpt["FailureRates"]=FailureRates.tolist()
-                    VNS_SimOpt["ServiceRates"]=ServiceRates.tolist()
-                    VNS_SimOpt["holding_costs"]=holding_costs.tolist()
-                    VNS_SimOpt["penalty_cost"]=penalty_cost  
-                    VNS_SimOpt["skillCost"]=skillCost
-                    VNS_SimOpt["machineCost"]=machineCost
-                    VNS_SimOpt["num_SKU"]=len(FailureRates)
-                    VNS_SimOpt["utilization_rate"]= case['simulationGAresults']['utilization_rate']
-                    VNS_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
-                    #####
+size_multipliers = [1,2,3,4,5]
+for case in json_case[0][:1]:
+    for size_multiplier in size_multipliers:       
+        FailureRates=np.array(size_multiplier*case['simulationGAresults']["failure_rates"])
+        ServiceRates=np.array(size_multiplier*case['simulationGAresults']["service_rates"])
+        holding_costs=np.array(size_multiplier*case['simulationGAresults']["holding_costs"])
+        penalty_cost=case['simulationGAresults']["penalty_cost"]
+        skillCost=100 #NOT USING THIS ATM
+        machineCost=case['simulationGAresults']['machine_cost']
+        print("nSKU: ",len(FailureRates))  
+        VNS_SimOpt={}
+        numPriorityClass=len(FailureRates) #making equal to number of SKUs
+                
+        ##############VNS RUN############
+        print "running VNS for ", case["caseID"]
+        cache={}
+        best_cost, best_priority, run_time, cache  =VNS_Priority(cache, FailureRates, ServiceRates,holding_costs, penalty_cost,skillCost, machineCost, numPriorityClass) 
+                
+        print "Best Cost", best_cost
+        print "Best Priority", best_priority
+                
+                
+        ####################RECORDING RESULTS##################
+        ###VNS Outputs
+        VNS_SimOpt["VNS_best_cost"]=best_cost
+        VNS_SimOpt["VNS_best_priority"]=best_priority
+        VNS_SimOpt["VNS_run_time"]=run_time
+                
+                
+        ###inputs
+        VNS_SimOpt["CaseID"]=case["caseID"]
+        VNS_SimOpt["FailureRates"]=FailureRates.tolist()
+        VNS_SimOpt["ServiceRates"]=ServiceRates.tolist()
+        VNS_SimOpt["holding_costs"]=holding_costs.tolist()
+        VNS_SimOpt["penalty_cost"]=penalty_cost  
+        VNS_SimOpt["skillCost"]=skillCost
+        VNS_SimOpt["machineCost"]=machineCost
+        VNS_SimOpt["num_SKU"]=len(FailureRates)
+        VNS_SimOpt["utilization_rate"]= case['simulationGAresults']['utilization_rate']
+        VNS_SimOpt["holding_cost_min"]= case['simulationGAresults']['holding_cost_min']
+        #####
 
-                    ### risk averse parameters
-                    VNS_SimOpt["var_level"]= var_level
-                    VNS_SimOpt["lamda"]= lamda
+        ### risk averse parameters
+        VNS_SimOpt["var_level"]= var_level
+        VNS_SimOpt["lamda"]= lamda
 
-                    Results.append(VNS_SimOpt)        
-                    print case["caseID"], "run completed"
-                    print("Cache Hit:", cache_hit, "Cache Miss:", cache_miss)  
-                    cache_hit = 0
-                    cache_miss = 0        
+        Results.append(VNS_SimOpt)        
+        print case["caseID"], "run completed"
+        print("Cache Hit:", cache_hit, "Cache Miss:", cache_miss)  
+        cache_hit = 0
+        cache_miss = 0        
               
 
 with open(prefix+fname, 'w') as outfile:
