@@ -336,7 +336,7 @@ nsf = [nsf[i] for i in indices]
 
 
 #################INTEGRATING pruning and cache TO GA#####################################
-
+prefix += ""
 Results=[]
 size_multipliers = [1,2,3,4,5]
 for case in json_case[0][:1]:

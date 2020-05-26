@@ -7,8 +7,8 @@ import simulation_codes  # Andre's package that used in simulation opt.
 
 lamda = 0  # test 0, 0.5, 1
 var_level = 0.05
-alg = "ga"  # ga or vns
-db_nodb = "nodb"
+alg = "vns"  # ga or vns
+db_nodb = "db"
 out_fname = "metadata_benchmark_rules_{}_{}_v{}_l{}_priority_simopt_riskaverse.json".format(alg, db_nodb, int(var_level*100), int(lamda*100))
 # input_fname = "results/combined_vns_db_v{}_l{}_priority_simopt_riskaverse.json".format(int(var_level*100), int(lamda*100))
 
