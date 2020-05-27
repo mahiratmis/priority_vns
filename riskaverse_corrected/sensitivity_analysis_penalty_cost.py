@@ -75,5 +75,5 @@ dicts = {'Used_server': Used_server,
         'Lamda':Lamda
         } 
 new_df = pd.DataFrame(dicts)
-df.to_json('{}.json'.format(param_name), orient='records')
+new_df.to_json('{}.json'.format(param_name), orient='records')
 print("Done!")

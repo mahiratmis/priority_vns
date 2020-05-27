@@ -55,7 +55,7 @@ for lamda in [0, 0.5, 1]:
             Used_server.append(used_server)
             Utilization.append(utilization)
             Num_back_orders.append(num_back_orders)
-            Parameter_Value.append(rr_multiplier)
+            Parameter_Value.append(var_level)
             Parameter_Name.append(param_name)
             Case_id.append(df["CaseID"][i])
             Var_level.append(var_level)
@@ -75,5 +75,5 @@ dicts = {'Used_server': Used_server,
         'Lamda':Lamda
         } 
 new_df = pd.DataFrame(dicts)
-df.to_json('{}.json'.format(param_name), orient='records')
+new_df.to_json('{}.json'.format(param_name), orient='records')
 print("Done!")
