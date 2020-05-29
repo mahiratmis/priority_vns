@@ -68,16 +68,16 @@ def strip_newlines_in_json(path=".", pattern="*.json"):
 # exit(0)
 
 # json to csv
-lamda = 1  # test 0, 0.5, 1
+lamda = 0  # test 0, 0.5, 1
 var_level = 0.05
 db_nodb = "nodb"
-alg = "ga"
-pth = "metadata"
-dynamic_part = "_{}_{}_v{}_l{}_".format(alg, 
+alg = "vns"
+pth = "sku_spectrum"
+dynamic_part = "{}_{}_v{}_l{}_".format(alg, 
                                      db_nodb,
                                      int(var_level*100),
                                      int(lamda*100))
-sub_pth = "combined" + dynamic_part + "priority_simopt_riskaverse"
+sub_pth = "combined_" + dynamic_part + "priority_simopt_riskaverse"
 # sub_pth = "combined_vns" + dynamic_part + "priority_simopt_riskaverse"
 
 o_dir_json = pth + "/combined/json/" + sub_pth
