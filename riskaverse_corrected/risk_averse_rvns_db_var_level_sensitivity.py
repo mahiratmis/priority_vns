@@ -117,7 +117,7 @@ def optimal_server_number2(priority, FailureRates, ServiceRates, holding_costs, 
             TotalCost = temp_TotalCost
             Server_Cost = temp_Server_Cost
             holdList, backorderList, SList = temp_holdList, temp_backorderList, temp_SList
-    return Min_server, min_nserver, TotalCost, Server_Cost, np.mean(holdList), np.mean(backorderList), np.mean(SList, axis=0).astype(int)
+    return Min_server, min_nserver, TotalCost, Server_Cost, np.mean(holdList), np.mean(backorderList), np.mean(SList, axis=0)
 
 
 
