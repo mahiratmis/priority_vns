@@ -531,6 +531,7 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
     totalCostList = []
     holdCostList=[]
     backorderCostList=[]
+    SList = []
 
     pool = mp.Pool(processes=nCores)
 
@@ -566,10 +567,11 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
                     if(n<maxQ):
                         numberInSystemDistributionArray[sk,n] += numberInSystemDistribution[sk][n]
 
-            totalCost, holdC, backorderC, _, _ = OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, numberInSystemDistributionArray, lamda, var_level)
+            totalCost, holdC, backorderC, S, _ = OptimizeStockLevelsAndCostsSimBased_RiskAverse(holdingCosts, penalty, numberInSystemDistributionArray, lamda, var_level)
             totalCostList.append(totalCost)
             holdCostList.append(holdC)
             backorderCostList.append(backorderC)
+            SList.append(S)
 
         #print "Runs are executed:", len(results)
         pool.close()
@@ -584,7 +586,7 @@ def simulation_optimization_bathrun_priority_riskaverse(lamda, var_level, failur
     finally:
         pool.join()
 
-    return totalCostList, holdCostList, backorderCostList
+    return totalCostList, holdCostList, backorderCostList, SList
 
 
 def simulation_optimization_bathrun_priority_riskaverse_extend(lamda, var_level, failureRates, serviceRates, holdingCosts, penalty, skillServerAssignment,priority,
