@@ -68,20 +68,21 @@ def strip_newlines_in_json(path=".", pattern="*.json"):
 # exit(0)
 
 # json to csv
-lamda = 0  # test 0, 0.5, 1
+lamda = 1 # test 0, 0.5, 1
 var_level = 0.05
-db_nodb = "nodb"
-alg = "ga"
-pth = "sku_spectrum"
+db_nodb = "db"
+alg = "vns"
+pth = "sensitivity_extra"
+param ="machine_cost"
 dynamic_part = "{}_{}_v{}_l{}_".format(alg, 
                                      db_nodb,
                                      int(var_level*100),
                                      int(lamda*100))
-sub_pth = "combined_" + dynamic_part + "priority_simopt_riskaverse"
+sub_pth = "combined_" + param + "_" + dynamic_part + "priority_simopt_riskaverse"
 # sub_pth = "combined_vns" + dynamic_part + "priority_simopt_riskaverse"
 
 o_dir_json = pth + "/combined/json/" + sub_pth
 o_dir_csv = pth + "/combined/csv/" + sub_pth
-pttern = "*" + dynamic_part + "*.json"
+pttern = param + "*" + dynamic_part + "*.json"
 combine_jsons(path=pth, out_fname=o_dir_json+".json", pattern=pttern)
 json_to_csv(path=pth, out_fname=o_dir_csv+".csv", pattern=pttern)
