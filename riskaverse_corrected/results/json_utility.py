@@ -68,12 +68,12 @@ def strip_newlines_in_json(path=".", pattern="*.json"):
 # exit(0)
 
 # json to csv
-lamda = 0.5 # test 0, 0.5, 1
+lamda = 0 # test 0, 0.5, 1
 var_level = 0.05
 db_nodb = "db"
 alg = "vns"
 pth = "sensitivity_extra"
-param ="var_level"
+param ="penalty_cost"
 dynamic_part = "{}_{}_v{}_l{}_".format(alg, 
                                      db_nodb,
                                      int(var_level*100),
